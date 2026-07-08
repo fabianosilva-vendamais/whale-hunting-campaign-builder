@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;}
+  doc-page:not(:defined){visibility:hidden}
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" margin="0.85in" hint-size="100%,100%">
+  <div style="font-family:'Instrument Sans',sans-serif;color:#1D2C31;font-size:13px;line-height:1.65">
+
+    <div style="border-bottom:3px solid #142B33;padding-bottom:18px;margin-bottom:28px">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C7B37;font-weight:700">VendaMais · Whale Hunting Campaign Builder</div>
+      <h1 style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;margin:8px 0 6px">Manual de Publicação</h1>
+      <p style="margin:0;color:#66757B;font-size:13.5px">GitHub · Vercel · Supabase · OpenAI — passo a passo para colocar o sistema na web e, depois, conectar IA e banco de dados.</p>
+    </div>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 8px">0. O que você tem hoje</h2>
+    <p style="margin:0 0 10px">O arquivo <strong>index.html</strong> (já renomeado, junto com <strong>support.js</strong> e a pasta <strong>assets/</strong>) é a interface completa e navegável do sistema — 15 telas, em branco, prontas para teste e demonstração. As ações de IA e banco são <strong>simuladas</strong>: os botões "Gerar com IA" mostram um aviso.</p>
+    <p style="margin:0 0 24px">Há dois caminhos, e eles se complementam: <strong>Caminho A</strong> (15 minutos) publica a interface na web para validar o fluxo com a equipe. <strong>Caminho B</strong> (projeto de desenvolvimento) conecta OpenAI, Supabase e uploads reais — é onde entram as chaves.</p>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px;padding-top:10px;border-top:1px solid #E4E0D3">Caminho A — Publicar a interface (GitHub + Vercel)</h2>
+
+    <h3 style="font-size:14px;font-weight:700;margin:16px 0 6px;color:#9C7B37">Passo 1 · Baixar o projeto</h3>
+    <p style="margin:0 0 8px">Baixe o ZIP do projeto (card de download no chat) e descompacte. Os arquivos necessários já estão com os nomes certos:</p>
+    <div style="background:#F4F2EC;border:1px solid #E4E0D3;border-radius:8px;padding:12px 16px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.8;margin:0 0 8px">index.html<br>support.js<br>assets/logo-vendamais.png</div>
+    <p style="margin:0 0 16px;color:#66757B;font-size:12.5px">Não mova o support.js nem a pasta assets/ — o sistema depende deles nesses caminhos. Os demais arquivos do projeto (backup do exemplo, este manual) não precisam subir.</p>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 2 · GitHub</h3>
+    <ol style="margin:0 0 16px;padding-left:20px">
+      <li style="margin-bottom:4px">Crie uma conta em <strong>github.com</strong> (se ainda não tiver).</li>
+      <li style="margin-bottom:4px">Clique em <strong>New repository</strong> → nome <strong>whale-hunting-campaign-builder</strong> → marque <strong>Private</strong> → <strong>Create repository</strong>.</li>
+      <li>Na página do repositório, clique em <strong>uploading an existing file</strong>, arraste index.html, support.js e a pasta assets, e clique em <strong>Commit changes</strong>.</li>
+    </ol>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 3 · Vercel</h3>
+    <ol style="margin:0 0 10px;padding-left:20px">
+      <li style="margin-bottom:4px">Crie conta em <strong>vercel.com</strong> com <strong>Continue with GitHub</strong> (já conecta os dois).</li>
+      <li style="margin-bottom:4px">Clique em <strong>Add New… → Project</strong> → selecione o repositório → <strong>Import</strong>.</li>
+      <li style="margin-bottom:4px">Não mude nada (Framework Preset: <strong>Other</strong>) → <strong>Deploy</strong>.</li>
+      <li>Em ~1 minuto a Vercel entrega a URL pública, ex.: <span style="font-family:ui-monospace,monospace;font-size:12px">whale-hunting-campaign-builder.vercel.app</span>.</li>
+    </ol>
+    <p style="margin:0 0 24px">Para atualizar depois: substitua os arquivos no GitHub (novo commit) — a Vercel republica sozinha. Para restringir acesso, use <strong>Settings → Deployment Protection</strong> na Vercel (recurso pago); o repositório privado protege o código, não a URL.</p>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px;padding-top:10px;border-top:1px solid #E4E0D3">Caminho B — Conectar IA e banco (versão funcional)</h2>
+    <p style="margin:8px 0 16px">Arquitetura recomendada: <strong>Next.js na Vercel + Supabase + OpenAI</strong>. Exige um desenvolvedor (ou o Claude Code), usando o protótipo como especificação de telas e fluxo.</p>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 1 · Supabase (banco + arquivos)</h3>
+    <ol style="margin:0 0 10px;padding-left:20px">
+      <li style="margin-bottom:4px">Crie conta em <strong>supabase.com</strong> → <strong>New project</strong> → nome <strong>whale-hunting</strong> → região <strong>South America (São Paulo)</strong> → guarde a senha do banco.</li>
+      <li style="margin-bottom:4px">No <strong>SQL Editor</strong>, crie as tabelas iniciais (esquema abaixo).</li>
+      <li style="margin-bottom:4px">Em <strong>Storage</strong>, crie um bucket <strong>materiais</strong> (privado) para PDFs e infográficos.</li>
+      <li>Copie as credenciais em <strong>Settings → API</strong>: Project URL, anon key e service_role key.</li>
+    </ol>
+    <div style="background:#142B33;color:#B9CBD0;border-radius:8px;padding:14px 18px;font-family:ui-monospace,monospace;font-size:10.5px;line-height:1.7;margin:0 0 16px;white-space:pre">create table campanhas (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null, segmento text, objetivo text,
+  publico_alvo text, cargos text, solucao_principal text,
+  solucoes_secundarias text, cta_principal text, restricoes text,
+  status text default 'rascunho',
+  periodo_inicio date, periodo_fim date,
+  criada_em timestamptz default now());
+
+create table materiais (
+  id uuid primary key default gen_random_uuid(),
+  campanha_id uuid references campanhas(id),
+  tipo text,          -- special_report | infografico | radar | contas_alvo
+  arquivo_url text, texto_extraido text, observacoes text);
+
+create table pecas (
+  id uuid primary key default gen_random_uuid(),
+  campanha_id uuid references campanhas(id),
+  tipo text,          -- analise | lp | regua | post | anuncio | roteiro
+  conteudo jsonb, versao int default 1, status text default 'rascunho');
+
+create table aprovacoes (
+  id uuid primary key default gen_random_uuid(),
+  peca_id uuid references pecas(id),
+  aprovador text, acao text, comentario text,
+  criada_em timestamptz default now());
+
+create table resultados (
+  id uuid primary key default gen_random_uuid(),
+  campanha_id uuid references campanhas(id),
+  semana date, metricas jsonb);</div>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 2 · OpenAI — onde colocar a chave</h3>
+    <ol style="margin:0 0 10px;padding-left:20px">
+      <li style="margin-bottom:4px">Acesse <strong>platform.openai.com</strong> → menu <strong>API keys</strong> → <strong>Create new secret key</strong> → copie a chave (<span style="font-family:ui-monospace,monospace;font-size:12px">sk-…</span>). Ela só aparece uma vez.</li>
+      <li style="margin-bottom:4px">Em <strong>Billing</strong>, adicione cartão e um limite mensal (ex.: US$ 20) — sem billing a API não responde.</li>
+      <li>Na <strong>Vercel</strong>, dentro do projeto → <strong>Settings → Environment Variables</strong> → cadastre as variáveis abaixo.</li>
+    </ol>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:0 0 10px">
+      <tr style="background:#F4F2EC">
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Variável</td>
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Valor</td>
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Onde é usada</td>
+      </tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-family:ui-monospace,monospace">OPENAI_API_KEY</td><td style="border:1px solid #E4E0D3;padding:8px 12px">sk-…</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Só no servidor (rotas de API)</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-family:ui-monospace,monospace">NEXT_PUBLIC_SUPABASE_URL</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Project URL</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Navegador + servidor</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-family:ui-monospace,monospace">NEXT_PUBLIC_SUPABASE_ANON_KEY</td><td style="border:1px solid #E4E0D3;padding:8px 12px">anon key</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Navegador + servidor</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-family:ui-monospace,monospace">SUPABASE_SERVICE_ROLE_KEY</td><td style="border:1px solid #E4E0D3;padding:8px 12px">service_role key</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Só no servidor</td></tr>
+    </table>
+    <div style="background:#FBF6E9;border:1px solid #EBDFC0;border-radius:8px;padding:12px 16px;margin:0 0 16px;color:#6E5A26"><strong>Regra de ouro:</strong> a chave da OpenAI nunca vai no HTML, no JavaScript do navegador ou no GitHub. Ela vive apenas como variável de ambiente na Vercel, e as chamadas acontecem numa rota de API no servidor (ex.: /api/gerar-analise). O navegador chama a sua rota; a sua rota chama a OpenAI.</div>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 3 · O papel de cada serviço</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:0 0 16px">
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700;width:110px">GitHub</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Guarda o código e o histórico de versões</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Vercel</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Hospeda o site e executa as rotas de API (onde a OpenAI é chamada)</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Supabase</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Banco (campanhas, peças, aprovações, resultados) + storage dos PDFs</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">OpenAI</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Gera análise estratégica, blocos da LP, régua, posts, copies e avaliação da peça da agência</td></tr>
+    </table>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 4 · Ordem recomendada</h3>
+    <ol style="margin:0 0 24px;padding-left:20px">
+      <li style="margin-bottom:4px">Publicar o protótipo (Caminho A) e validar o fluxo com a equipe.</li>
+      <li style="margin-bottom:4px">Criar o Supabase e as tabelas.</li>
+      <li style="margin-bottom:4px">Desenvolver a versão Next.js começando por Nova campanha → Materiais → Análise estratégica; depois LP Builder e exportação; depois o resto.</li>
+      <li>Conectar a OpenAI uma rota por vez, sempre no padrão: IA gera → humano edita → humano aprova.</li>
+    </ol>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 8px;padding-top:10px;border-top:1px solid #E4E0D3">Segurança — checklist rápido</h2>
+    <ul style="margin:0 0 16px;padding-left:20px">
+      <li style="margin-bottom:4px">Repositório GitHub privado</li>
+      <li style="margin-bottom:4px">Nenhuma chave (sk-…, service_role) commitada no código — só Environment Variables da Vercel</li>
+      <li style="margin-bottom:4px">Arquivo .env.local no .gitignore (no projeto Next.js)</li>
+      <li style="margin-bottom:4px">Bucket de materiais do Supabase privado — os PDFs são material estratégico</li>
+      <li style="margin-bottom:4px">Formulários das LPs com consentimento LGPD (já previsto no bloco Formulário)</li>
+      <li>Limite de gasto mensal configurado na OpenAI</li>
+    </ul>
+
+    <p style="margin:0;color:#66757B;font-size:12px;border-top:1px solid #E4E0D3;padding-top:12px"><strong>Problemas comuns:</strong> página em branco na Vercel → confira se o arquivo se chama index.html e se support.js e assets/ subiram juntos. Erro 429 da OpenAI → limite de billing. Para salvar este manual em PDF: Ctrl+P / Cmd+P → Salvar como PDF.</p>
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

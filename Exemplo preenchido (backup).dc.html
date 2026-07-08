@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;height:100%;}
+  *{box-sizing:border-box;}
+  textarea,input,select{font-family:'Instrument Sans',sans-serif;}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translate(-50%,0);}}
+  @media (max-width:920px){ [data-role="sidebar"]{display:none !important;} [data-role="content"]{padding:20px 16px 56px !important;} [data-role="mobilenav"]{display:flex !important;} [data-role="topbar-extra"]{display:none !important;} [data-grid]{grid-template-columns:1fr !important;} }
+</style>
+</helmet>
+<div data-screen-label="Whale Hunting Campaign Builder" style="display:flex;height:100vh;background:#F4F2EC;font-family:'Instrument Sans',sans-serif;color:#1D2C31;overflow:hidden">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div data-role="sidebar" style="width:250px;flex-shrink:0;background:#142B33;display:flex;flex-direction:column;overflow-y:auto">
+    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <img src="assets/logo-vendamais.png" alt="VendaMais" style="height:26px;filter:brightness(0) invert(1);opacity:.95">
+      <div style="margin-top:10px;font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#C9A45B;font-weight:600">Whale Hunting</div>
+      <div style="font-size:11.5px;color:#8AA2A9;margin-top:2px">Campaign Builder</div>
+    </div>
+    <div style="padding:6px 0 12px;flex:1">
+      <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="10">
+        <div>
+          <sc-if value="{{ it.hasSection }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px 20px 5px;font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:#5E7B84;font-weight:700">{{ it.section }}</div>
+          </sc-if>
+          <div onClick="{{ it.onClick }}" style="display:flex;align-items:center;gap:10px;padding:7px 17px;cursor:pointer;font-size:13px;color:{{ it.color }};background:{{ it.bg }};font-weight:{{ it.weight }};border-left:3px solid {{ it.border }}" style-hover="background:rgba(255,255,255,.06)">
+            <span style="width:18px;font-size:10.5px;color:{{ it.numColor }};font-variant-numeric:tabular-nums">{{ it.num }}</span>
+            <span>{{ it.label }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:50%;background:#C9A45B;color:#142B33;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">FS</div>
+      <div style="min-width:0">
+        <div style="font-size:12.5px;color:#E9EFF0;font-weight:600">Fabiano Silva</div>
+        <div style="font-size:11px;color:#8AA2A9">Usuário principal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E4E0D3;display:flex;align-items:center;gap:14px;padding:0 28px">
+      <div style="font-size:12px;color:#66757B">Campanha ativa</div>
+      <div style="display:flex;align-items:center;gap:8px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:5px 14px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#2F7D5C"></span>
+        <span style="font-size:12.5px;font-weight:600">Cooperativas de Crédito · Junho 2026</span>
+      </div>
+      <div data-role="topbar-extra" style="font-size:12px;color:{{ topChipColor }};background:{{ topChipBg }};border-radius:999px;padding:5px 12px;font-weight:600">{{ topChip }}</div>
+      <div style="flex:1"></div>
+      <div data-role="topbar-extra" style="font-size:12px;color:#66757B">Responsável: <span style="color:#1D2C31;font-weight:600">Fabiano</span></div>
+    </div>
+
+    <div data-role="mobilenav" style="display:none;background:#142B33;padding:10px 12px;gap:6px;overflow-x:auto;flex-shrink:0">
+      <sc-for list="{{ navItems }}" as="m" hint-placeholder-count="6">
+        <button onClick="{{ m.onClick }}" style="flex-shrink:0;background:{{ m.mBg }};color:{{ m.mColor }};border:none;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">{{ m.num }} · {{ m.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="flex:1;overflow-y:auto">
+      <div data-role="content" style="max-width:1160px;margin:0 auto;padding:28px 40px 72px">
+
+        <!-- ============ 01 DASHBOARD ============ -->
+        <sc-if value="{{ sDash }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="01 · Dashboard">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Visão geral</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Central de campanhas Whale Hunting</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Cada campanha segue a mesma trilha: tema, materiais, estratégia, LP, réguas, LinkedIn, agência, aprovação e resultados. Continue de onde parou ou crie a campanha do próximo mês.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                <div style="font-size:12px;color:#66757B">Campanhas ativas</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;margin-top:4px">1</div>
+                <div style="font-size:11.5px;color:#8A6A24;margin-top:2px">Em produção</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                <div style="font-size:12px;color:#66757B">Peças em aprovação</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;margin-top:4px">3</div>
+                <div style="font-size:11.5px;color:#66757B;margin-top:2px">Carrossel v2, LP, régua</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                <div style="font-size:12px;color:#66757B">Super PCIs engajados</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;margin-top:4px">9</div>
+                <div style="font-size:11.5px;color:#2F7D5C;margin-top:2px">Últimos 90 dias</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                <div style="font-size:12px;color:#66757B">Reuniões executivas</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;margin-top:4px">7</div>
+                <div style="font-size:11.5px;color:#2F7D5C;margin-top:2px">4 oportunidades criadas</div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0">Campanhas</h2>
+              <div style="display:flex;gap:10px">
+                <button onClick="{{ toastDup }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Duplicar campanha</button>
+                <button onClick="{{ goNova }}" style="background:#142B33;border:1px solid #142B33;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">+ Nova campanha</button>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid #EEEBE0">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:15px;font-weight:700">Cooperativas de Crédito</div>
+                    <span style="font-size:11px;font-weight:700;color:{{ campChipColor }};background:{{ campChipBg }};border-radius:999px;padding:3px 10px">{{ campStatus }}</span>
+                  </div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">Junho 2026 · {{ campSub }} · Responsável: Fabiano</div>
+                  <div style="margin-top:10px;height:5px;background:#EEEBE0;border-radius:99px;overflow:hidden;max-width:420px"><div style="width:{{ campPct }};height:100%;background:{{ campBar }};transition:width .4s"></div></div>
+                </div>
+                <button onClick="{{ goAg }}" style="background:#142B33;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer;flex-shrink:0" style-hover="background:#1E3E49">Continuar</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid #EEEBE0">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:15px;font-weight:700">Agroindústria de Insumos</div>
+                    <span style="font-size:11px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:3px 10px">Publicada</span>
+                  </div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">Maio 2026 · 214 downloads · 18 leads qualificados · 3 super PCIs · 2 reuniões marcadas</div>
+                </div>
+                <button onClick="{{ goRes }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer;flex-shrink:0" style-hover="border-color:#9C7B37">Ver resultados</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:18px 22px">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:15px;font-weight:700">Indústria B2B de Equipamentos</div>
+                    <span style="font-size:11px;font-weight:700;color:#66757B;background:#EEEBE0;border-radius:999px;padding:3px 10px">Encerrada</span>
+                  </div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">Abril 2026 · Decisão registrada: ajustar tese e repetir no segundo semestre</div>
+                </div>
+                <button onClick="{{ goRes }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer;flex-shrink:0" style-hover="border-color:#9C7B37">Ver relatório</button>
+              </div>
+            </div>
+
+            <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:30px 0 4px">Criação avulsa</h2>
+            <p style="font-size:13px;color:#66757B;margin:0 0 12px">Precisa de só uma peça? Vá direto à etapa — sem seguir a sequência. Tudo usa os materiais e a estratégia já cadastrados na campanha ativa.</p>
+            <div data-grid style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+              <div onClick="{{ goLp }}" style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 18px;cursor:pointer" style-hover="border-color:#9C7B37">
+                <div style="font-size:11px;color:#9C7B37;font-weight:700;font-variant-numeric:tabular-nums">07</div>
+                <div style="font-size:13.5px;font-weight:700;margin-top:4px">Landing page</div>
+                <div style="font-size:12px;color:#66757B;margin-top:2px">Gerar ou editar a LP do WordPress</div>
+              </div>
+              <div onClick="{{ goBit }}" style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 18px;cursor:pointer" style-hover="border-color:#9C7B37">
+                <div style="font-size:11px;color:#9C7B37;font-weight:700;font-variant-numeric:tabular-nums">08</div>
+                <div style="font-size:13.5px;font-weight:700;margin-top:4px">Régua de e-mails</div>
+                <div style="font-size:12px;color:#66757B;margin-top:2px">Plano Bitrix: score, tags e 5 e-mails</div>
+              </div>
+              <div onClick="{{ goCont }}" style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 18px;cursor:pointer" style-hover="border-color:#9C7B37">
+                <div style="font-size:11px;color:#9C7B37;font-weight:700;font-variant-numeric:tabular-nums">09</div>
+                <div style="font-size:13.5px;font-weight:700;margin-top:4px">Posts e roteiros</div>
+                <div style="font-size:12px;color:#66757B;margin-top:2px">Posts, anúncios, carrossel e briefing</div>
+              </div>
+              <div onClick="{{ goAds }}" style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 18px;cursor:pointer" style-hover="border-color:#9C7B37">
+                <div style="font-size:11px;color:#9C7B37;font-weight:700;font-variant-numeric:tabular-nums">10</div>
+                <div style="font-size:13.5px;font-weight:700;margin-top:4px">Plano de mídia</div>
+                <div style="font-size:12px;color:#66757B;margin-top:2px">Públicos, orçamento e UTMs do LinkedIn</div>
+              </div>
+            </div>
+
+            <sc-if value="{{ dicas }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:20px;background:#FBFAF6;border:1px solid #E9E3D2;border-radius:12px;padding:16px 20px;display:flex;gap:12px">
+                <div style="width:26px;height:26px;border-radius:50%;background:#F3ECDA;color:#8A6A24;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">?</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.55"><strong style="color:#1D2C31">Sequência ou avulso — você escolhe.</strong> A esteira 01–15 existe para ninguém se perder, mas nenhuma etapa tranca a outra: clique em qualquer item do menu e gere só a peça que precisar. O sistema prepara tudo — LP, régua, posts, anúncios e briefing — e você aprova antes de qualquer publicação.</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ============ 02 NOVA CAMPANHA ============ -->
+        <sc-if value="{{ sNova }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="02 · Nova campanha">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 02 · Criação</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Nova campanha</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Defina o tema do mês e o objetivo. Só o essencial agora — o restante pode ser completado nas próximas etapas.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:26px 28px">
+                <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+                  <div style="grid-column:1/-1">
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Tema ou segmento do mês</label>
+                    <input defaultValue="Cooperativas de crédito — estrutura comercial PJ" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div style="grid-column:1/-1">
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Objetivo da campanha</label>
+                    <input defaultValue="Gerar conversas executivas com diretores de negócios de cooperativas singulares e centrais" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Público-alvo</label>
+                    <input defaultValue="Cooperativas de crédito com carteira PJ relevante" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Cargos prioritários</label>
+                    <input defaultValue="Diretor de negócios, superintendente, gerente regional" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Solução principal VendaMais</label>
+                    <select style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6">
+                      <option>Consultoria de estrutura comercial</option>
+                      <option>Diagnóstico comercial</option>
+                      <option>Treinamento de equipes</option>
+                      <option>Desenvolvimento de lideranças</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Soluções secundárias</label>
+                    <input defaultValue="Playbook comercial, game de vendas" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">CTA principal</label>
+                    <input defaultValue="Baixar o Special Report" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Período</label>
+                    <input defaultValue="01/06/2026 — 30/06/2026" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                  </div>
+                  <div style="grid-column:1/-1">
+                    <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Observações e restrições de comunicação</label>
+                    <textarea rows="3" defaultValue="Não usar tom de urgência artificial. Evitar comparação direta com bancos por nome. Linguagem cooperativista: 'associado', não 'cliente'." style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:14px;background:#FBFAF6;resize:vertical" style-focus="border-color:#9C7B37;outline:none"></textarea>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;border-top:1px solid #EEEBE0;padding-top:18px">
+                  <button onClick="{{ toastSave }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Salvar rascunho</button>
+                  <button onClick="{{ goMat }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Materiais →</button>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#142B33;border-radius:12px;padding:20px 22px;color:#DDE6E8">
+                  <div style="font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#C9A45B;font-weight:700;margin-bottom:8px">Recomendação do Radar</div>
+                  <div style="font-size:13.5px;line-height:1.6">Cooperativas de crédito aparecem como o segmento com maior lacuna de conteúdo: alta busca por "estrutura comercial cooperativa" e nenhum concorrente posicionado. A VendaMais não aparece nas respostas agenticas para o tema.</div>
+                  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                    <span style="font-size:11px;background:rgba(201,164,91,.18);color:#E8D5A8;border-radius:999px;padding:3px 10px">Prioridade alta</span>
+                    <span style="font-size:11px;background:rgba(255,255,255,.1);color:#B9CBD0;border-radius:999px;padding:3px 10px">Lacuna de conteúdo</span>
+                  </div>
+                </div>
+                <sc-if value="{{ dicas }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#FBFAF6;border:1px solid #E9E3D2;border-radius:12px;padding:16px 18px;font-size:12.5px;color:#4C5B60;line-height:1.55">
+                    <strong style="color:#1D2C31">Por que isso importa.</strong> Quanto mais específico o nicho, mais forte a campanha. "Cooperativas de crédito" funciona; "setor financeiro" seria amplo demais e o sistema alertaria.
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 03 MATERIAIS ============ -->
+        <sc-if value="{{ sMat }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="03 · Upload de materiais">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 03 · Criação</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Upload de materiais</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Suba o Special Report, o infográfico e os materiais de apoio. A IA analisa tudo para gerar a estratégia da campanha.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;gap:14px">
+                <div style="width:46px;height:58px;background:#142B33;border-radius:6px;color:#C9A45B;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">PDF</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:700">Special Report</span><span style="font-size:10.5px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:2px 9px">Analisado pela IA</span></div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">special-report-cooperativas.pdf · 32 páginas · 8,4 MB</div>
+                  <div style="font-size:12px;color:#4C5B60;margin-top:6px;line-height:1.5">Tese, dados e capítulos extraídos. 14 números utilizáveis identificados.</div>
+                </div>
+                <button onClick="{{ toastCopy }}" style="align-self:center;background:transparent;border:none;color:#9C7B37;font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0">Substituir</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;gap:14px">
+                <div style="width:46px;height:58px;background:#F3ECDA;border-radius:6px;color:#8A6A24;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">IMG</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:700">Infográfico</span><span style="font-size:10.5px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:2px 9px">Analisado pela IA</span></div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">infografico-benchmark-cooperativas.png · 1080×1920 · 2,1 MB</div>
+                  <div style="font-size:12px;color:#4C5B60;margin-top:6px;line-height:1.5">Benchmark visual do setor. Recomendado para o bloco "Dados principais" da LP e Document Ad.</div>
+                </div>
+                <button onClick="{{ toastCopy }}" style="align-self:center;background:transparent;border:none;color:#9C7B37;font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0">Substituir</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;gap:14px">
+                <div style="width:46px;height:58px;background:#E5EBEC;border-radius:6px;color:#3D6570;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">TXT</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:700">Resumo do Radar</span><span style="font-size:10.5px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:2px 9px">Incluído</span></div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">Colado manualmente · 640 palavras</div>
+                  <div style="font-size:12px;color:#4C5B60;margin-top:6px;line-height:1.5">Lacuna de posicionamento e recomendações de tema incorporadas à análise estratégica.</div>
+                </div>
+                <button onClick="{{ toastCopy }}" style="align-self:center;background:transparent;border:none;color:#9C7B37;font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0">Editar</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;gap:14px">
+                <div style="width:46px;height:58px;background:#E4F0E8;border-radius:6px;color:#2F7D5C;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">CSV</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:700">Lista de contas-alvo</span><span style="font-size:10.5px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:2px 9px">24 contas</span></div>
+                  <div style="font-size:12.5px;color:#66757B;margin-top:3px">contas-alvo-cooperativas.csv · validado sem erros</div>
+                  <div style="font-size:12px;color:#4C5B60;margin-top:6px;line-height:1.5">Usada para matched audience no LinkedIn e priorização comercial de super PCI.</div>
+                </div>
+                <button onClick="{{ toastCopy }}" style="align-self:center;background:transparent;border:none;color:#9C7B37;font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0">Substituir</button>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+              <div style="padding:14px 22px;border-bottom:1px solid #EEEBE0;font-size:13px;font-weight:700">Prévia das contas-alvo (super PCI)</div>
+              <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr;gap:0;font-size:12.5px">
+                <div style="padding:10px 22px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0">Conta</div>
+                <div style="padding:10px 12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0">Região</div>
+                <div style="padding:10px 12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0">Porte</div>
+                <div style="padding:10px 12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0">Prioridade</div>
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC">Cooperativa Central Vale Verde</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Sul</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Central</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC"><span style="font-size:11px;font-weight:700;color:#A94A38;background:#F6E7E2;border-radius:999px;padding:2px 9px">Alta</span></div>
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC">CrediSerra</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Sul</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Singular G</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC"><span style="font-size:11px;font-weight:700;color:#A94A38;background:#F6E7E2;border-radius:999px;padding:2px 9px">Alta</span></div>
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC">Coopercentro Financeira</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Centro-Oeste</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC;color:#4C5B60">Singular G</div><div style="padding:10px 12px;border-bottom:1px solid #F4F2EC"><span style="font-size:11px;font-weight:700;color:#8A6A24;background:#F3ECDA;border-radius:999px;padding:2px 9px">Média</span></div>
+                <div style="padding:10px 22px">Unicoop Crédito Nordeste</div><div style="padding:10px 12px;color:#4C5B60">Nordeste</div><div style="padding:10px 12px;color:#4C5B60">Central</div><div style="padding:10px 12px"><span style="font-size:11px;font-weight:700;color:#8A6A24;background:#F3ECDA;border-radius:999px;padding:2px 9px">Média</span></div>
+              </div>
+              <div style="padding:10px 22px;border-top:1px solid #EEEBE0;font-size:12px;color:#9C7B37;font-weight:600">+ 20 contas — ver lista completa</div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+              <label style="font-size:12px;font-weight:700;color:#4C5B60;display:block;margin-bottom:6px">Observações sobre uso dos materiais</label>
+              <textarea rows="2" defaultValue="Não usar os dados da página 27 (fonte em revisão). O infográfico pode ser recortado por seção para os posts." style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:13.5px;background:#FBFAF6;resize:vertical" style-focus="border-color:#9C7B37;outline:none"></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:14px">
+                <button onClick="{{ goBrand }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Brand Kit →</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 04 BRAND KIT ============ -->
+        <sc-if value="{{ sBrand }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="04 · Brand Kit">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 04 · Criação</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Brand Kit VendaMais</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Ativos permanentes da marca, reutilizados em todas as campanhas. Cadastre uma vez, use sempre.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                <div style="height:110px;background:#FBFAF6;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #EEEBE0"><img src="assets/logo-vendamais.png" alt="Logo principal" style="height:34px"></div>
+                <div style="padding:12px 16px"><div style="font-size:13px;font-weight:700">Logo principal</div><div style="font-size:11.5px;color:#66757B;margin-top:2px">Horizontal · fundo claro · PNG e SVG</div></div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                <div style="height:110px;background:#142B33;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #EEEBE0"><img src="assets/logo-vendamais.png" alt="Logo branco" style="height:34px;filter:brightness(0) invert(1)"></div>
+                <div style="padding:12px 16px"><div style="font-size:13px;font-weight:700">Logo branco</div><div style="font-size:11.5px;color:#66757B;margin-top:2px">Horizontal · fundo escuro · PNG e SVG</div></div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                <div style="height:110px;background:#FBFAF6;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #EEEBE0;overflow:hidden"><img src="assets/logo-vendamais.png" alt="Ícone" style="height:64px;width:64px;object-fit:cover;object-position:left"></div>
+                <div style="padding:12px 16px"><div style="font-size:13px;font-weight:700">Ícone / símbolo</div><div style="font-size:11.5px;color:#66757B;margin-top:2px">Versão vertical e favicon</div></div>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Cores da marca</div>
+                <div style="display:flex;gap:10px">
+                  <div style="flex:1"><div style="height:56px;border-radius:8px;background:#1E3A43"></div><div style="font-size:11.5px;font-weight:700;margin-top:6px">Petróleo</div><div style="font-size:11px;color:#66757B">#1E3A43</div></div>
+                  <div style="flex:1"><div style="height:56px;border-radius:8px;background:#E8593B"></div><div style="font-size:11.5px;font-weight:700;margin-top:6px">Coral</div><div style="font-size:11px;color:#66757B">#E8593B</div></div>
+                  <div style="flex:1"><div style="height:56px;border-radius:8px;background:#1D2C31"></div><div style="font-size:11.5px;font-weight:700;margin-top:6px">Grafite</div><div style="font-size:11px;color:#66757B">#1D2C31</div></div>
+                  <div style="flex:1"><div style="height:56px;border-radius:8px;background:#F4F2EC;border:1px solid #E4E0D3"></div><div style="font-size:11.5px;font-weight:700;margin-top:6px">Marfim</div><div style="font-size:11px;color:#66757B">#F4F2EC</div></div>
+                </div>
+                <div style="font-size:12px;color:#66757B;margin-top:12px;line-height:1.5">O coral é reservado a CTAs e destaques pontuais nas LPs. Nunca usar como cor de fundo extensa.</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Tipografia</div>
+                <div style="border:1px solid #EEEBE0;border-radius:8px;padding:12px 16px;margin-bottom:8px">
+                  <div style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600">Títulos — Source Serif</div>
+                  <div style="font-size:11.5px;color:#66757B;margin-top:2px">Alternativa web segura: Georgia</div>
+                </div>
+                <div style="border:1px solid #EEEBE0;border-radius:8px;padding:12px 16px">
+                  <div style="font-size:16px;font-weight:600">Texto — Instrument Sans</div>
+                  <div style="font-size:11.5px;color:#66757B;margin-top:2px">Alternativa web segura: Arial / Helvetica</div>
+                </div>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Links oficiais</div>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#4C5B60">
+                  <div style="display:flex;justify-content:space-between"><span>Site</span><span style="color:#9C7B37;font-weight:600">vendamais.com.br</span></div>
+                  <div style="display:flex;justify-content:space-between"><span>LinkedIn</span><span style="color:#9C7B37;font-weight:600">/company/vendamais</span></div>
+                  <div style="display:flex;justify-content:space-between"><span>WhatsApp comercial</span><span style="color:#9C7B37;font-weight:600">(41) 99999-0000</span></div>
+                  <div style="display:flex;justify-content:space-between"><span>Política de privacidade</span><span style="color:#9C7B37;font-weight:600">vendamais.com.br/privacidade</span></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Frases institucionais aprovadas</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.6;border-left:3px solid #C9A45B;padding-left:12px;margin-bottom:10px">"Há mais de 25 anos ajudando empresas brasileiras a vender mais e melhor."</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.6;border-left:3px solid #C9A45B;padding-left:12px">"A VendaMais estrutura áreas comerciais: diagnóstico, consultoria, treinamento e desenvolvimento de lideranças de vendas."</div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:18px">
+              <button onClick="{{ goCases }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Biblioteca de cases →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 05 CASES ============ -->
+        <sc-if value="{{ sCases }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="05 · Biblioteca de cases">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 05 · Criação</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Biblioteca de cases</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:680px">Cases, logos e depoimentos disponíveis para a campanha. O sistema bloqueia o uso público de qualquer material sem permissão confirmada.</p>
+
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+              <span style="font-size:12px;font-weight:700;background:#142B33;color:#FFFFFF;border-radius:999px;padding:6px 14px">Todos</span>
+              <span style="font-size:12px;font-weight:600;background:#FFFFFF;border:1px solid #CFC9B8;color:#4C5B60;border-radius:999px;padding:6px 14px;cursor:pointer" style-hover="border-color:#9C7B37">Cooperativas</span>
+              <span style="font-size:12px;font-weight:600;background:#FFFFFF;border:1px solid #CFC9B8;color:#4C5B60;border-radius:999px;padding:6px 14px;cursor:pointer" style-hover="border-color:#9C7B37">Indústria</span>
+              <span style="font-size:12px;font-weight:600;background:#FFFFFF;border:1px solid #CFC9B8;color:#4C5B60;border-radius:999px;padding:6px 14px;cursor:pointer" style-hover="border-color:#9C7B37">Com depoimento</span>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:15px;font-weight:700">CrediCampo</div>
+                  <span style="font-size:10.5px;font-weight:700;color:#2F7D5C;background:#E4F0E8;border-radius:999px;padding:3px 10px">Permissão: sim</span>
+                </div>
+                <div style="font-size:12px;color:#66757B">Cooperativa de crédito · Sul · Consultoria + playbook comercial</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.55">Reorganização da esteira comercial PJ em 6 meses: papéis redesenhados, cadência de prospecção e rotina de gestão semanal.</div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.55;border-left:3px solid #C9A45B;padding-left:10px;font-style:italic">"Saímos de uma equipe reativa para uma operação com método."<br><span style="font-style:normal;color:#66757B;font-size:11.5px">Marcos Antunes, Diretor de Negócios</span></div>
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <span style="font-size:11px;background:#EEEBE0;color:#4C5B60;border-radius:999px;padding:3px 10px">Logo aprovado</span>
+                  <span style="font-size:11px;background:#EEEBE0;color:#4C5B60;border-radius:999px;padding:3px 10px">Vídeo 2min</span>
+                </div>
+                <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:8px;padding:9px;font-size:12.5px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Usar nesta campanha</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:15px;font-weight:700">Coopercred União</div>
+                  <span style="font-size:10.5px;font-weight:700;color:#8A6A24;background:#F3ECDA;border-radius:999px;padding:3px 10px">Verificar antes</span>
+                </div>
+                <div style="font-size:12px;color:#66757B">Cooperativa de crédito · Centro-Oeste · Treinamento de líderes</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.55">Programa de desenvolvimento de 32 gerentes de conta com foco em condução de conversa consultiva PJ.</div>
+                <div style="font-size:12px;color:#8A6A24;background:#FBF6E9;border:1px solid #EBDFC0;border-radius:8px;padding:10px 12px;line-height:1.5">⚠ Autorização de logo pendente de renovação. Confirmar com o contato interno antes de usar em LP pública.</div>
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <span style="font-size:11px;background:#EEEBE0;color:#4C5B60;border-radius:999px;padding:3px 10px">Sem depoimento</span>
+                </div>
+                <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:9px;font-size:12.5px;font-weight:600;color:#8A6A24;cursor:pointer" style-hover="border-color:#9C7B37">Solicitar verificação</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;opacity:.85">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:15px;font-weight:700">Metalúrgica Vetor</div>
+                  <span style="font-size:10.5px;font-weight:700;color:#A94A38;background:#F6E7E2;border-radius:999px;padding:3px 10px">Uso restrito</span>
+                </div>
+                <div style="font-size:12px;color:#66757B">Indústria B2B · Sudeste · Diagnóstico comercial</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.55">Diagnóstico completo da operação comercial com plano de reestruturação em 3 frentes.</div>
+                <div style="font-size:12px;color:#A94A38;background:#FBF0ED;border:1px solid #EDD2CA;border-radius:8px;padding:10px 12px;line-height:1.5">✕ Cliente autoriza citação apenas em conversas privadas. Bloqueado para LP pública, posts e anúncios.</div>
+                <div style="margin-top:auto"></div>
+                <button style="background:#EEEBE0;border:none;border-radius:8px;padding:9px;font-size:12.5px;font-weight:600;color:#8B8878;cursor:not-allowed">Indisponível para uso público</button>
+              </div>
+            </div>
+
+            <sc-if value="{{ dicas }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#FBFAF6;border:1px solid #E9E3D2;border-radius:12px;padding:16px 20px;display:flex;gap:12px;margin-bottom:16px">
+                <div style="width:26px;height:26px;border-radius:50%;background:#F3ECDA;color:#8A6A24;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">?</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.55"><strong style="color:#1D2C31">Regra de segurança.</strong> Antes de exportar a LP, o sistema roda um checklist de autorização. Logos, fotos e depoimentos são material sensível — mesmo de clientes já atendidos.</div>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goEst }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Análise estratégica →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 06 ESTRATÉGIA ============ -->
+        <sc-if value="{{ sEst }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="06 · Análise estratégica">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+              <div>
+                <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 06 · Inteligência</div>
+                <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Análise estratégica da IA</h1>
+                <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Gerada a partir do Special Report, do infográfico e do Radar. Edite ou regenere qualquer seção — nada avança sem sua aprovação.</p>
+              </div>
+              <div style="display:flex;gap:10px;flex-shrink:0;padding-bottom:22px">
+                <button onClick="{{ toastRegen }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">↻ Regenerar tudo</button>
+                <button onClick="{{ estAprovar }}" style="background:{{ estBg }};border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer">{{ estLabel }}</button>
+              </div>
+            </div>
+
+            <div style="background:#142B33;border-radius:12px;padding:24px 28px;color:#E9EFF0;margin-bottom:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#C9A45B;font-weight:700">Tese central da campanha</div>
+                <button onClick="{{ toastRegen }}" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#B9CBD0;cursor:pointer" style-hover="background:rgba(255,255,255,.15)">↻ Regenerar</button>
+              </div>
+              <div style="font-family:'Source Serif 4',serif;font-size:20px;line-height:1.5;font-weight:500">O crescimento das cooperativas de crédito escondeu a fragilidade da estrutura comercial. As que profissionalizarem a operação PJ nos próximos 2 anos vão capturar a base subutilizada — as demais vão perder o associado mais rentável para bancos digitais.</div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:13px;font-weight:700">Dores do segmento</div><button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻</button></div>
+                <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#4C5B60;line-height:1.8">
+                  <li>Gerentes de conta reativos, sem cadência de prospecção</li>
+                  <li>Carteira PJ concentrada em poucos produtos por associado</li>
+                  <li>Meta batida pela maré do setor, não pelo método</li>
+                  <li>Ausência de rotina de gestão comercial nas singulares</li>
+                  <li>Dificuldade de competir com a agilidade dos bancos digitais</li>
+                </ul>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:13px;font-weight:700">Dados utilizáveis do Special Report</div><button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻</button></div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;gap:12px;align-items:baseline"><span style="font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;color:#1D2C31;min-width:64px">68%</span><span style="font-size:13px;color:#4C5B60;line-height:1.5">das cooperativas não têm processo formal de prospecção PJ</span></div>
+                  <div style="display:flex;gap:12px;align-items:baseline"><span style="font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;color:#1D2C31;min-width:64px">3,4×</span><span style="font-size:13px;color:#4C5B60;line-height:1.5">mais conversão entre gerentes com cadência definida</span></div>
+                  <div style="display:flex;gap:12px;align-items:baseline"><span style="font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;color:#1D2C31;min-width:64px">41%</span><span style="font-size:13px;color:#4C5B60;line-height:1.5">dos associados PJ concentram relacionamento em um único produto</span></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:13px;font-weight:700">Objeções prováveis e respostas</div><button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻</button></div>
+                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.55">
+                  <div><span style="font-weight:700;color:#1D2C31">"Nossa realidade é diferente."</span><span style="color:#4C5B60"> → Benchmark com 40 cooperativas de portes distintos, por região.</span></div>
+                  <div><span style="font-weight:700;color:#1D2C31">"Método engessa o relacionamento."</span><span style="color:#4C5B60"> → O roteiro preserva o atendimento cooperativista; estrutura ≠ script.</span></div>
+                  <div><span style="font-weight:700;color:#1D2C31">"Já temos consultoria do sistema."</span><span style="color:#4C5B60"> → Foco complementar: execução comercial, não governança.</span></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:13px;font-weight:700">CTAs recomendados</div><button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻</button></div>
+                <div style="border:1px solid #E4E0D3;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+                  <div style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700">Principal</div>
+                  <div style="font-size:14px;font-weight:700;margin-top:2px">Baixar o Special Report</div>
+                  <div style="font-size:12px;color:#66757B;margin-top:2px">Baixo atrito, qualifica pelo formulário</div>
+                </div>
+                <div style="border:1px solid #E4E0D3;border-radius:8px;padding:12px 14px">
+                  <div style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#66757B;font-weight:700">Secundário</div>
+                  <div style="font-size:14px;font-weight:700;margin-top:2px">Agendar conversa executiva de 30 min</div>
+                  <div style="font-size:12px;color:#66757B;margin-top:2px">Para decisores prontos — atalho para o comercial</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;margin-bottom:16px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px">Riscos de comunicação</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px">
+                <span style="background:#FBF6E9;border:1px solid #EBDFC0;color:#8A6A24;border-radius:8px;padding:8px 14px">Evitar comparação nominal com bancos digitais</span>
+                <span style="background:#FBF6E9;border:1px solid #EBDFC0;color:#8A6A24;border-radius:8px;padding:8px 14px">Usar "associado", nunca "cliente"</span>
+                <span style="background:#FBF6E9;border:1px solid #EBDFC0;color:#8A6A24;border-radius:8px;padding:8px 14px">Não prometer resultado percentual sem case que sustente</span>
+                <span style="background:#FBF6E9;border:1px solid #EBDFC0;color:#8A6A24;border-radius:8px;padding:8px 14px">Tom consultivo — sem urgência artificial</span>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goLp }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Landing Page Builder →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 07 LP BUILDER ============ -->
+        <sc-if value="{{ sLp }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="07 · Landing Page Builder">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 07 · Produção</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Landing Page Builder</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 18px;max-width:680px">Monte a LP bloco a bloco, veja a prévia em desktop e mobile e exporte pronta para o WordPress — HTML/CSS isolado, blocos Gutenberg e pacote ZIP.</p>
+
+            <div style="display:inline-flex;background:#EAE7DC;border-radius:10px;padding:4px;gap:2px;margin-bottom:18px">
+              <sc-for list="{{ lpTabs }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.color }};border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+              </sc-for>
+            </div>
+
+            <!-- TAB: BLOCOS -->
+            <sc-if value="{{ lpIsBlocos }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid #EEEBE0">
+                  <div style="font-size:13px;font-weight:700">Blocos da página — ative, reordene e edite</div>
+                  <div style="font-size:12px;color:#66757B">Arraste com as setas · edições geram nova versão</div>
+                </div>
+                <sc-for list="{{ lpBlocks }}" as="b" hint-placeholder-count="6">
+                  <div style="border-bottom:1px solid #F4F2EC;opacity:{{ b.opacity }}">
+                    <div style="display:flex;align-items:center;gap:14px;padding:13px 22px">
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <button onClick="{{ b.onUp }}" style="background:#F4F2EC;border:none;border-radius:5px;width:22px;height:18px;font-size:10px;color:#66757B;cursor:pointer;line-height:1" style-hover="background:#EAE7DC">▲</button>
+                        <button onClick="{{ b.onDown }}" style="background:#F4F2EC;border:none;border-radius:5px;width:22px;height:18px;font-size:10px;color:#66757B;cursor:pointer;line-height:1" style-hover="background:#EAE7DC">▼</button>
+                      </div>
+                      <div style="width:22px;font-size:11px;color:#9C7B37;font-weight:700;font-variant-numeric:tabular-nums">{{ b.idx }}</div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:14px;font-weight:700">{{ b.nome }}</div>
+                        <div style="font-size:12px;color:#66757B;margin-top:1px">{{ b.desc }}</div>
+                      </div>
+                      <button onClick="{{ b.onRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">↻ Regenerar</button>
+                      <button onClick="{{ b.onEdit }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#1D2C31;cursor:pointer;flex-shrink:0" style-hover="border-color:#9C7B37">{{ b.editLabel }}</button>
+                      <div onClick="{{ b.onTog }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;width:76px">
+                        <div style="width:32px;height:18px;border-radius:99px;background:{{ b.togBg }};position:relative;transition:background .2s">
+                          <div style="position:absolute;top:2px;left:{{ b.togX }};width:14px;height:14px;border-radius:50%;background:#FFFFFF;transition:left .2s"></div>
+                        </div>
+                        <span style="font-size:11px;font-weight:700;color:{{ b.togColor }}">{{ b.togLabel }}</span>
+                      </div>
+                    </div>
+                    <sc-if value="{{ b.edit }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 22px 16px 80px">
+                        <textarea rows="4" defaultValue="{{ b.copy }}" onChange="{{ b.onCopy }}" style="width:100%;border:1px solid #CFC9B8;border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.55;background:#FBFAF6;resize:vertical" style-focus="border-color:#9C7B37;outline:none"></textarea>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <!-- TAB: PRÉVIA -->
+            <sc-if value="{{ lpIsPrevia }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                  <div style="display:inline-flex;background:#EAE7DC;border-radius:10px;padding:4px;gap:2px">
+                    <sc-for list="{{ prevTabs }}" as="t" hint-placeholder-count="2">
+                      <button onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.color }};border:none;border-radius:8px;padding:7px 16px;font-size:12.5px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:12px;color:#66757B">Prévia simplificada — o HTML exportado é fiel ao design final</div>
+                </div>
+                <div style="background:#E7E4D8;border:1px solid #E4E0D3;border-radius:14px;padding:28px;display:flex;justify-content:center">
+                  <div style="width:{{ prevW }};max-width:100%;background:#FFFFFF;border-radius:8px;overflow:hidden;box-shadow:0 12px 40px rgba(20,43,51,.14);transition:width .3s">
+                    <sc-if value="{{ heroOn }}" hint-placeholder-val="{{ true }}">
+                      <div style="background:#1E3A43;padding:{{ prevPad }};color:#F4F2EC">
+                        <img src="assets/logo-vendamais.png" alt="VendaMais" style="height:22px;filter:brightness(0) invert(1);opacity:.95">
+                        <div style="font-family:'Source Serif 4',serif;font-size:{{ prevH1 }};font-weight:600;line-height:1.3;margin-top:22px;max-width:560px">{{ heroTitle }}</div>
+                        <div style="font-size:14px;color:#B9CBD0;line-height:1.6;margin-top:12px;max-width:520px">{{ heroSub }}</div>
+                        <div style="display:inline-block;background:#E8593B;color:#FFFFFF;font-size:13.5px;font-weight:700;border-radius:8px;padding:12px 24px;margin-top:20px">Baixar o Special Report</div>
+                        <div style="font-size:11.5px;color:#8AA2A9;margin-top:10px">PDF gratuito · 32 páginas · benchmark de 40 cooperativas</div>
+                      </div>
+                    </sc-if>
+                    <sc-for list="{{ enabledBlocks }}" as="s" hint-placeholder-count="5">
+                      <div style="padding:26px 32px;border-bottom:1px solid #F0EDE4">
+                        <div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#9C7B37;font-weight:700">{{ s.nome }}</div>
+                        <div style="font-size:13px;color:#4C5B60;line-height:1.6;margin-top:8px;white-space:pre-line">{{ s.snippet }}</div>
+                      </div>
+                    </sc-for>
+                    <div style="padding:18px 32px;background:#1D2C31;color:#8AA2A9;font-size:11px">VendaMais · vendamais.com.br · Política de privacidade</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- TAB: EXPORT -->
+            <sc-if value="{{ lpIsExport }}" hint-placeholder-val="{{ false }}">
+              <div data-grid style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start">
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid #EEEBE0">
+                      <div style="font-size:13px;font-weight:700">HTML/CSS pronto para o WordPress</div>
+                      <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Copiar código</button>
+                    </div>
+                    <pre style="margin:0;padding:18px 22px;background:#142B33;color:#B9CBD0;font-size:11.5px;line-height:1.7;overflow-x:auto;font-family:ui-monospace,monospace">&lt;!-- Whale Hunting · Cooperativas de Crédito · Jun/2026 --&gt;
+&lt;div class="vm-whale-coop"&gt;
+  &lt;style&gt;
+    /* CSS isolado — classes prefixadas com vm- */
+    .vm-whale-coop { font-family: Georgia, serif; color: #1D2C31; }
+    .vm-whale-coop .vm-hero { background: #1E3A43; padding: 64px 24px; }
+    .vm-whale-coop .vm-cta { background: #E8593B; color: #fff; }
+  &lt;/style&gt;
+  &lt;section class="vm-hero"&gt;
+    &lt;img src="SUBSTITUIR_URL_LOGO_BRANCO" alt="VendaMais"&gt;
+    &lt;h1&gt;O novo ciclo comercial das cooperativas…&lt;/h1&gt;
+    …</pre>
+                  </div>
+                  <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Instruções de publicação no WordPress</div>
+                    <ol style="margin:0;padding-left:20px;font-size:13px;color:#4C5B60;line-height:2">
+                      <li>Criar nova página e definir o slug <span style="font-family:ui-monospace,monospace;background:#F4F2EC;border-radius:4px;padding:1px 6px;font-size:12px">/cooperativas-de-credito</span></li>
+                      <li>Subir as 6 imagens do pacote na biblioteca de mídia</li>
+                      <li>Substituir as URLs marcadas com <span style="font-family:ui-monospace,monospace;background:#F4F2EC;border-radius:4px;padding:1px 6px;font-size:12px">SUBSTITUIR_URL_</span></li>
+                      <li>Colar o código em um bloco "HTML personalizado"</li>
+                      <li>Configurar o formulário com redirecionamento para a página de obrigado</li>
+                      <li>Testar links, CTAs e versão mobile</li>
+                      <li>Conferir UTMs e Insight Tag antes de publicar</li>
+                    </ol>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Pacote ZIP da campanha</div>
+                    <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:#4C5B60">
+                      <div style="display:flex;justify-content:space-between"><span>landing-page.html</span><span style="color:#8B8878">48 KB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>obrigado.html</span><span style="color:#8B8878">12 KB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>estilos.css</span><span style="color:#8B8878">9 KB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>imagens/ (6 arquivos)</span><span style="color:#8B8878">3,2 MB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>blocos-gutenberg.md</span><span style="color:#8B8878">6 KB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>campanha.json</span><span style="color:#8B8878">14 KB</span></div>
+                      <div style="display:flex;justify-content:space-between"><span>LEIA-ME.md</span><span style="color:#8B8878">3 KB</span></div>
+                    </div>
+                    <button onClick="{{ toastZip }}" style="width:100%;margin-top:14px;background:#142B33;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Baixar pacote ZIP</button>
+                  </div>
+                  <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:8px">Página de obrigado</div>
+                    <div style="font-size:12.5px;color:#4C5B60;line-height:1.6">Confirma o envio, entrega o report, oferece a conversa executiva e carrega o evento de conversão.</div>
+                    <button onClick="{{ toastCopy }}" style="width:100%;margin-top:12px;background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:9px;font-size:12.5px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Copiar HTML da página</button>
+                  </div>
+                  <div style="background:#FBF6E9;border:1px solid #EBDFC0;border-radius:12px;padding:16px 18px;font-size:12.5px;color:#8A6A24;line-height:1.55">
+                    <strong>Checklist de autorização ✓</strong><br>Todos os logos e depoimentos usados nesta LP têm permissão confirmada (1 case: CrediCampo).
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:18px">
+              <button onClick="{{ goBit }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Bitrix Manual Planner →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 08 BITRIX ============ -->
+        <sc-if value="{{ sBit }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="08 · Bitrix Manual Planner">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+              <div>
+                <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 08 · Produção</div>
+                <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Bitrix Manual Planner</h1>
+                <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:660px">Plano completo e copiável para configurar manualmente no Bitrix. Sem integração automática nesta fase — por decisão de escopo.</p>
+              </div>
+              <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer;flex-shrink:0;margin-bottom:22px" style-hover="background:#1E3E49">Copiar plano completo</button>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Configuração básica</div>
+                <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+                  <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#66757B">Nome da automação</span><span style="font-weight:600;text-align:right">Whale Hunting — Cooperativas Jun/2026</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#66757B">Gatilho inicial</span><span style="font-weight:600;text-align:right">Formulário da LP ou Lead Gen Form</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#66757B">Origem</span><span style="font-weight:600;text-align:right">whale-cooperativas-jun2026</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#66757B">Responsável comercial</span><span style="font-weight:600;text-align:right">A definir no Bitrix</span></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:#4C5B60;margin:16px 0 8px">Campos recomendados</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">Cooperativa</span>
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">Cargo</span>
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">WhatsApp</span>
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">Desafio comercial</span>
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">Conta-alvo? (sim/não)</span>
+                  <span style="font-size:11.5px;background:#F4F2EC;border:1px solid #E4E0D3;border-radius:999px;padding:4px 11px">Score</span>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:#4C5B60;margin:14px 0 8px">Tags sugeridas</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:11.5px;background:#E5EBEC;color:#3D6570;border-radius:999px;padding:4px 11px">whale-hunting</span>
+                  <span style="font-size:11.5px;background:#E5EBEC;color:#3D6570;border-radius:999px;padding:4px 11px">cooperativas-credito</span>
+                  <span style="font-size:11.5px;background:#E5EBEC;color:#3D6570;border-radius:999px;padding:4px 11px">special-report-jun26</span>
+                  <span style="font-size:11.5px;background:#E5EBEC;color:#3D6570;border-radius:999px;padding:4px 11px">super-pci</span>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Score de qualificação</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:12px;border:1px solid #EEEBE0;border-radius:8px;padding:10px 14px">
+                    <span style="font-size:12px;font-weight:700;min-width:52px;color:#66757B">0–30</span>
+                    <div style="flex:1"><div style="font-size:13px;font-weight:700">Lead frio</div><div style="font-size:12px;color:#66757B">Apenas régua de relacionamento</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;border:1px solid #EEEBE0;border-radius:8px;padding:10px 14px">
+                    <span style="font-size:12px;font-weight:700;min-width:52px;color:#8A6A24">31–60</span>
+                    <div style="flex:1"><div style="font-size:13px;font-weight:700">Em nutrição</div><div style="font-size:12px;color:#66757B">Acompanhar aberturas e cliques</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;border:1px solid #EEEBE0;border-radius:8px;padding:10px 14px">
+                    <span style="font-size:12px;font-weight:700;min-width:52px;color:#3D6570">61–89</span>
+                    <div style="flex:1"><div style="font-size:13px;font-weight:700">Qualificado</div><div style="font-size:12px;color:#66757B">Tarefa para análise comercial</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;border:1px solid #E9D9C4;background:#FBF6E9;border-radius:8px;padding:10px 14px">
+                    <span style="font-size:12px;font-weight:700;min-width:52px;color:#A94A38">90+</span>
+                    <div style="flex:1"><div style="font-size:13px;font-weight:700">Super PCI</div><div style="font-size:12px;color:#8A6A24">Abordagem humana personalizada em até 24h</div></div>
+                  </div>
+                </div>
+                <div style="font-size:12px;color:#66757B;margin-top:12px;line-height:1.5">Pontuação sugerida: cargo de direção +40 · conta-alvo +30 · pediu conversa +30 · abriu 3+ e-mails +15 · clicou no case +10.</div>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+              <div style="padding:14px 22px;border-bottom:1px solid #EEEBE0;display:flex;justify-content:space-between;align-items:center">
+                <div style="font-size:13px;font-weight:700">Régua de relacionamento — 5 e-mails</div>
+                <div style="font-size:12px;color:#66757B">Pausa automática se o lead responder ou pedir conversa</div>
+              </div>
+              <sc-for list="{{ emails }}" as="e" hint-placeholder-count="5">
+                <div style="border-bottom:1px solid #F4F2EC">
+                  <div style="display:flex;align-items:center;gap:14px;padding:13px 22px">
+                    <span style="font-size:11px;font-weight:700;color:#9C7B37;background:#F3ECDA;border-radius:6px;padding:4px 9px;flex-shrink:0">{{ e.prazo }}</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13.5px;font-weight:700">{{ e.assunto }}</div>
+                      <div style="font-size:12px;color:#66757B;margin-top:1px">{{ e.n }} · Condição: {{ e.cond }}</div>
+                    </div>
+                    <button onClick="{{ e.onToggle }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">{{ e.toggleLabel }}</button>
+                  </div>
+                  <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin:0 22px 16px 22px;background:#FBFAF6;border:1px solid #EEEBE0;border-radius:8px;padding:16px 18px;font-size:13px;color:#4C5B60;line-height:1.7;white-space:pre-line">{{ e.corpo }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Tarefas comerciais por score</div>
+                <ul style="margin:0;padding-left:18px;font-size:13px;color:#4C5B60;line-height:1.9">
+                  <li><strong style="color:#1D2C31">Score 61+</strong> — tarefa "Analisar perfil e histórico" para o responsável</li>
+                  <li><strong style="color:#1D2C31">Score 90+</strong> — tarefa urgente "Abordagem super PCI em 24h" com mensagem sugerida</li>
+                  <li><strong style="color:#1D2C31">Conta-alvo baixou o report</strong> — notificar comercial mesmo com score baixo</li>
+                  <li><strong style="color:#1D2C31">Pediu conversa executiva</strong> — pausar régua e agendar em até 4h úteis</li>
+                </ul>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Checklist de implementação manual</div>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#4C5B60">
+                  <div>1. Criar os 6 campos personalizados no lead</div>
+                  <div>2. Criar as 4 tags e a origem da campanha</div>
+                  <div>3. Montar a régua com os 5 e-mails e condições</div>
+                  <div>4. Configurar regras de score e tarefas automáticas</div>
+                  <div>5. Testar com um lead fictício de ponta a ponta</div>
+                  <div>6. Validar critérios de pausa (resposta, descadastro, reunião)</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goCont }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Content Studio →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 09 CONTENT STUDIO ============ -->
+        <sc-if value="{{ sCont }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="09 · Content Studio">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 09 · Produção</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Content Studio</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 18px;max-width:660px">Posts orgânicos por autor, copies de anúncios, roteiro do carrossel e briefing para a agência. Tudo editável antes de publicar ou enviar.</p>
+
+            <div style="display:inline-flex;background:#EAE7DC;border-radius:10px;padding:4px;gap:2px;margin-bottom:18px">
+              <sc-for list="{{ csTabs }}" as="t" hint-placeholder-count="4">
+                <button onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.color }};border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ csIsPosts }}" hint-placeholder-val="{{ true }}">
+              <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:50%;background:#142B33;color:#C9A45B;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">VM</div>
+                    <div><div style="font-size:13px;font-weight:700">VendaMais · institucional</div><div style="font-size:11px;color:#66757B">Lançamento da campanha</div></div>
+                  </div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65">Estudamos a estrutura comercial de 40 cooperativas de crédito. O padrão que encontramos incomoda: crescimento forte, método fraco. 68% não têm processo formal de prospecção PJ.<br><br>O novo Special Report da VendaMais mostra o que separa as cooperativas que crescem com método das que crescem com a maré — e um roteiro de 90 dias para reorganizar a equipe comercial.<br><br>Link para download nos comentários.</div>
+                  <div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">
+                    <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar</button>
+                    <button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻ Regenerar</button>
+                  </div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:50%;background:#C9A45B;color:#142B33;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">R</div>
+                    <div><div style="font-size:13px;font-weight:700">Raul · pessoal</div><div style="font-size:11px;color:#66757B">Tom autoral e provocativo</div></div>
+                  </div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65">Passei os últimos meses conversando com diretores de cooperativas de crédito. Quase todos me disseram a mesma frase: "nossa equipe comercial é boa, mas reativa".<br><br>Reativa não é um traço de personalidade. É ausência de método.<br><br>Colocamos o que aprendemos num relatório — inclusive o dado de que gerentes com cadência definida convertem 3,4x mais. O link está no primeiro comentário.</div>
+                  <div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">
+                    <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar</button>
+                    <button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻ Regenerar</button>
+                  </div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:50%;background:#3D6570;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">F</div>
+                    <div><div style="font-size:13px;font-weight:700">Fabiano · pessoal</div><div style="font-size:11px;color:#66757B">Estratégia e execução comercial</div></div>
+                  </div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65">Existe um teste simples para saber se uma área comercial tem método: perguntar o que acontece na segunda-feira de manhã.<br><br>Nas cooperativas que estudamos, a resposta mais comum foi "depende". Nas que mais crescem, a resposta é uma rotina: carteira revisada, cadência ativa, prioridades claras.<br><br>O benchmark completo está no nosso novo Special Report.</div>
+                  <div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">
+                    <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar</button>
+                    <button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻ Regenerar</button>
+                  </div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:50%;background:#EEEBE0;color:#66757B;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">↻</div>
+                    <div><div style="font-size:13px;font-weight:700">Reativação · D+10</div><div style="font-size:11px;color:#66757B">Para quem viu e não baixou</div></div>
+                  </div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65">Uma semana depois de publicarmos o Special Report sobre cooperativas de crédito, o comentário mais frequente veio de diretores: "é exatamente a discussão que estamos tendo internamente".<br><br>Se o tema está na sua pauta de diretoria, o material foi feito para essa conversa. Link nos comentários — e se preferir discutir seu caso, minha agenda está aberta.</div>
+                  <div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">
+                    <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar</button>
+                    <button onClick="{{ toastRegen }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">↻ Regenerar</button>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ csIsAds }}" hint-placeholder-val="{{ false }}">
+              <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:#3D6570;background:#E5EBEC;border-radius:999px;padding:3px 10px">Imagem única · tráfego para LP</span><button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar</button></div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65"><strong style="color:#1D2C31">Headline:</strong> 68% das cooperativas não têm processo de prospecção PJ<br><strong style="color:#1D2C31">Texto:</strong> O benchmark de estrutura comercial de 40 cooperativas de crédito, em um Special Report gratuito. Para diretores e superintendentes de negócios.<br><strong style="color:#1D2C31">CTA:</strong> Baixar relatório</div>
+                  <div style="font-size:11.5px;color:#8A6A24;margin-top:10px">Variação B: headline com o dado "3,4×" — testar contra a versão A.</div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:#3D6570;background:#E5EBEC;border-radius:999px;padding:3px 10px">Document Ad · prévia do report</span><button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar</button></div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65"><strong style="color:#1D2C31">Texto:</strong> As 8 primeiras páginas do nosso Special Report sobre a estrutura comercial das cooperativas de crédito — leia direto no feed. O relatório completo é liberado com o formulário.<br><strong style="color:#1D2C31">Documento:</strong> prévia de 8 páginas (gerada do PDF)</div>
+                  <div style="font-size:11.5px;color:#8A6A24;margin-top:10px">Melhor formato para awareness com decisores, segundo o histórico de campanhas.</div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:#3D6570;background:#E5EBEC;border-radius:999px;padding:3px 10px">Lead Gen Form</span><button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar</button></div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65"><strong style="color:#1D2C31">Headline:</strong> Benchmark comercial: 40 cooperativas de crédito<br><strong style="color:#1D2C31">Formulário:</strong> nome, e-mail corporativo, cooperativa, cargo (4 campos — conversão acima de qualificação neste formato)<br><strong style="color:#1D2C31">CTA:</strong> Receber o relatório</div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:#A94A38;background:#F6E7E2;border-radius:999px;padding:3px 10px">Retargeting · visitou e não converteu</span><button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar</button></div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.65"><strong style="color:#1D2C31">Headline:</strong> O relatório continua disponível<br><strong style="color:#1D2C31">Texto:</strong> Você visitou a página do Special Report sobre cooperativas de crédito. Se o tema segue na pauta, o material completo — benchmark e roteiro de 90 dias — está a um clique.<br><strong style="color:#1D2C31">CTA:</strong> Baixar agora</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ csIsCarrossel }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden">
+                <div style="padding:14px 22px;border-bottom:1px solid #EEEBE0;display:flex;justify-content:space-between;align-items:center">
+                  <div style="font-size:13px;font-weight:700">Roteiro do carrossel — 8 slides · a agência cria o layout final</div>
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar roteiro</button>
+                </div>
+                <div style="display:grid;grid-template-columns:52px 1.6fr 1fr;font-size:13px">
+                  <div style="padding:10px 0 10px 22px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0;font-size:12px">#</div>
+                  <div style="padding:10px 12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0;font-size:12px">Texto do slide</div>
+                  <div style="padding:10px 22px 10px 12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0;font-size:12px">Sugestão visual</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">1</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">Sua cooperativa cresce com método — ou com a maré?</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Tipografia grande, fundo petróleo, sem imagem</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">2</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">Estudamos a estrutura comercial de 40 cooperativas de crédito. O padrão incomoda.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Continuidade visual, criar tensão sem entregar o dado</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">3</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">68% não têm processo formal de prospecção PJ.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Número em destaque máximo</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">4</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">Gerentes com cadência definida convertem 3,4× mais.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Comparativo visual simples, 2 barras</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">5</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">O problema não é a equipe. É a ausência de método.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Frase única, respiro</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">6</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">O Special Report mostra o roteiro de 90 dias para reorganizar a operação comercial.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Mockup do report</div>
+                  <div style="padding:12px 0 12px 22px;border-bottom:1px solid #F4F2EC;font-weight:700;color:#9C7B37">7</div><div style="padding:12px;border-bottom:1px solid #F4F2EC;line-height:1.5">Feito para diretores, superintendentes e gerentes regionais de cooperativas.</div><div style="padding:12px 22px 12px 12px;border-bottom:1px solid #F4F2EC;color:#66757B;line-height:1.5">Cargos em lista, hierarquia clara</div>
+                  <div style="padding:12px 0 12px 22px;font-weight:700;color:#9C7B37">8</div><div style="padding:12px;line-height:1.5">Baixe gratuitamente. Link no post.</div><div style="padding:12px 22px 12px 12px;color:#66757B;line-height:1.5">CTA + logo VendaMais</div>
+                </div>
+                <div style="padding:14px 22px;border-top:1px solid #EEEBE0;font-size:12.5px;color:#4C5B60;line-height:1.6"><strong style="color:#1D2C31">Observações para a agência:</strong> público sênior lê no celular — máximo 2 linhas por slide. Tom premium e sóbrio; sem ícones genéricos de negócio. Liberdade criativa no layout, mantendo hierarquia e CTA.</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ csIsBrief }}" hint-placeholder-val="{{ false }}">
+              <div data-grid style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;align-items:start">
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:22px 24px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:14px">Briefing para a agência — Carrossel LinkedIn</div>
+                  <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:1.6">
+                    <div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:3px">Objetivo</div><div style="color:#4C5B60">Gerar downloads do Special Report entre decisores de cooperativas de crédito. Peça-âncora da campanha paga de junho.</div></div>
+                    <div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:3px">Público</div><div style="color:#4C5B60">Diretores de negócios, superintendentes e gerentes regionais. Leitura predominante em celular, à noite ou entre reuniões.</div></div>
+                    <div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:3px">Tom e estilo</div><div style="color:#4C5B60">Premium, sóbrio, direto. Sem clichês visuais de "crescimento" (setas, foguetes, apertos de mão). Usar Brand Kit VendaMais: petróleo como base, coral só no CTA.</div></div>
+                    <div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:3px">Entregáveis</div><div style="color:#4C5B60">Carrossel 1080×1350 (8 slides) em PDF + fonte editável. Prazo: 5 dias úteis. Revisão pelo Agency Review Hub deste sistema.</div></div>
+                    <div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:3px">Anexos</div><div style="color:#4C5B60">Roteiro aprovado dos 8 slides · Brand Kit completo · Special Report para referência · infográfico do benchmark.</div></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <button onClick="{{ toastBrief }}" style="background:{{ briefBg }};border:none;border-radius:8px;padding:12px;font-size:13.5px;font-weight:600;color:#FFFFFF;cursor:pointer">{{ briefLabel }}</button>
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:11px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Copiar briefing como texto</button>
+                  <sc-if value="{{ dicas }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:#FBFAF6;border:1px solid #E9E3D2;border-radius:12px;padding:16px 18px;font-size:12.5px;color:#4C5B60;line-height:1.55"><strong style="color:#1D2C31">Divisão de papéis.</strong> O sistema gera roteiro e briefing; a agência cria layout e imagens. Quando a peça voltar, avalie no Agency Review Hub antes de aprovar.</div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:18px">
+              <button onClick="{{ goAds }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para LinkedIn Ads Planner →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 10 LINKEDIN ADS ============ -->
+        <sc-if value="{{ sAds }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="10 · LinkedIn Ads Planner">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 10 · Produção</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">LinkedIn Ads Planner</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:660px">Estratégia de mídia focada em qualidade de lead — não em volume. A métrica de sucesso é reunião executiva, não CPL.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:8px">Público 1 · Contas-alvo</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.6">Matched audience com as 24 contas da lista + cargos de direção e superintendência. Estimativa: 1.800 pessoas.</div>
+                <div style="font-size:11.5px;color:#2F7D5C;margin-top:8px;font-weight:600">Prioridade máxima de orçamento</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:8px">Público 2 · Setor amplo</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.6">Setor "bancos e cooperativas" + função comercial/negócios + senioridade diretor+. Estimativa: 14.000 pessoas.</div>
+                <div style="font-size:11.5px;color:#66757B;margin-top:8px;font-weight:600">Awareness e captação secundária</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:8px">Público 3 · Retargeting</div>
+                <div style="font-size:13px;color:#4C5B60;line-height:1.6">Visitou a LP, abriu o Lead Gen Form sem enviar, ou engajou com posts da campanha nos últimos 30 dias.</div>
+                <div style="font-size:11.5px;color:#66757B;margin-top:8px;font-weight:600">Ativa a partir da semana 2</div>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:12px;color:#66757B;font-weight:700">Cenário conservador</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;margin-top:4px">R$ 4.000</div>
+                <div style="font-size:12.5px;color:#4C5B60;margin-top:8px;line-height:1.6">Só contas-alvo + retargeting. Document Ad como formato único. 4 semanas.</div>
+              </div>
+              <div style="background:#142B33;border-radius:12px;padding:20px 22px;color:#E9EFF0;position:relative">
+                <div style="position:absolute;top:14px;right:16px;font-size:10px;font-weight:700;letter-spacing:1px;color:#C9A45B;text-transform:uppercase">Recomendado</div>
+                <div style="font-size:12px;color:#8AA2A9;font-weight:700">Cenário moderado</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;margin-top:4px">R$ 8.000</div>
+                <div style="font-size:12.5px;color:#B9CBD0;margin-top:8px;line-height:1.6">60% contas-alvo, 25% setor amplo, 15% retargeting. Document Ad + tráfego LP + Lead Gen Form em teste A/B.</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:12px;color:#66757B;font-weight:700">Cenário agressivo</div>
+                <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;margin-top:4px">R$ 15.000</div>
+                <div style="font-size:12.5px;color:#4C5B60;margin-top:8px;line-height:1.6">Todos os públicos + impulsionamento dos posts de Raul e Fabiano + segunda onda de criativos.</div>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Formatos e quando usar</div>
+                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.55">
+                  <div><strong style="color:#1D2C31">Document Ad</strong><span style="color:#4C5B60"> — prévia do report no feed; melhor formato para autoridade com decisores.</span></div>
+                  <div><strong style="color:#1D2C31">Tráfego para LP</strong><span style="color:#4C5B60"> — quando o decisor precisa de contexto completo, cases e CTA de conversa.</span></div>
+                  <div><strong style="color:#1D2C31">Lead Gen Form</strong><span style="color:#4C5B60"> — menor atrito; usar no público amplo, medindo qualidade contra a LP.</span></div>
+                  <div><strong style="color:#1D2C31">Impulsionamento</strong><span style="color:#4C5B60"> — amplificar os posts pessoais que performarem organicamente.</span></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Testes A/B planejados</div>
+                <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:#4C5B60;line-height:1.5">
+                  <div>1. LP completa <em>vs</em> Lead Gen Form — qualidade do lead após 2 semanas</div>
+                  <div>2. Headline com dado (68%) <em>vs</em> headline com pergunta</div>
+                  <div>3. Criativo com mockup do report <em>vs</em> tipografia pura</div>
+                  <div>4. CTA "Baixar relatório" <em>vs</em> "Receber benchmark"</div>
+                </div>
+                <div style="font-size:12px;color:#8A6A24;background:#FBF6E9;border:1px solid #EBDFC0;border-radius:8px;padding:10px 12px;margin-top:12px;line-height:1.5">Critério de decisão: leads qualificados e reuniões — nunca só CPL.</div>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+              <div style="padding:14px 22px;border-bottom:1px solid #EEEBE0;display:flex;justify-content:space-between;align-items:center">
+                <div style="font-size:13px;font-weight:700">UTMs padronizadas</div>
+                <button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar todas</button>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 2.2fr;font-size:12.5px">
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC;font-weight:600">Document Ad · contas-alvo</div><div style="padding:10px 22px 10px 0;border-bottom:1px solid #F4F2EC;color:#66757B;font-family:ui-monospace,monospace;font-size:11.5px">?utm_source=linkedin&amp;utm_medium=paid&amp;utm_campaign=whale-coop-jun26&amp;utm_content=docad-alvo</div>
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC;font-weight:600">Tráfego LP · setor amplo</div><div style="padding:10px 22px 10px 0;border-bottom:1px solid #F4F2EC;color:#66757B;font-family:ui-monospace,monospace;font-size:11.5px">?utm_source=linkedin&amp;utm_medium=paid&amp;utm_campaign=whale-coop-jun26&amp;utm_content=lp-amplo</div>
+                <div style="padding:10px 22px;border-bottom:1px solid #F4F2EC;font-weight:600">Retargeting</div><div style="padding:10px 22px 10px 0;border-bottom:1px solid #F4F2EC;color:#66757B;font-family:ui-monospace,monospace;font-size:11.5px">?utm_source=linkedin&amp;utm_medium=paid&amp;utm_campaign=whale-coop-jun26&amp;utm_content=rtg-lp</div>
+                <div style="padding:10px 22px;font-weight:600">Post orgânico · Raul</div><div style="padding:10px 22px 10px 0;color:#66757B;font-family:ui-monospace,monospace;font-size:11.5px">?utm_source=linkedin&amp;utm_medium=organic&amp;utm_campaign=whale-coop-jun26&amp;utm_content=post-raul</div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goAg }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Agency Review Hub →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 11 AGENCY REVIEW ============ -->
+        <sc-if value="{{ sAg }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="11 · Agency Review Hub">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+              <div>
+                <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 11 · Revisão</div>
+                <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Agency Review Hub</h1>
+                <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Carrossel final enviado pela agência, avaliado pela IA contra o roteiro e o briefing aprovados. Comente, solicite ajustes ou aprove.</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:22px">
+                <span style="font-size:12px;color:#66757B">Versão:</span>
+                <span style="font-size:12px;font-weight:600;background:#EEEBE0;color:#8B8878;border-radius:999px;padding:5px 13px">v1 · nota 61 · reprovada</span>
+                <span style="font-size:12px;font-weight:700;background:#142B33;color:#FFFFFF;border-radius:999px;padding:5px 13px">v2 · atual</span>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:280px 1fr;gap:14px;margin-bottom:14px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#142B33;border-radius:12px;padding:24px;color:#E9EFF0;text-align:center">
+                  <div style="font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#C9A45B;font-weight:700">Nota geral da IA</div>
+                  <div style="font-family:'Source Serif 4',serif;font-size:56px;font-weight:600;line-height:1.1;margin-top:6px">82<span style="font-size:22px;color:#8AA2A9">/100</span></div>
+                  <div style="font-size:12.5px;color:#B9CBD0;margin-top:6px">Sugestão: aprovar com ajustes leves</div>
+                  <div style="margin-top:14px;display:inline-block;font-size:11.5px;font-weight:700;background:{{ agChipBg }};color:{{ agChipColor }};border-radius:999px;padding:5px 14px">{{ agStatus }}</div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:10px">Critérios</div>
+                  <div style="display:flex;flex-direction:column;gap:9px;font-size:12px">
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Força do slide 1</span><span style="font-weight:700">9/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:90%;height:100%;background:#2F7D5C;border-radius:99px"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Clareza da mensagem</span><span style="font-weight:700">9/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:90%;height:100%;background:#2F7D5C;border-radius:99px"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Hierarquia visual</span><span style="font-weight:700">8/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:80%;height:100%;background:#2F7D5C;border-radius:99px"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Legibilidade mobile</span><span style="font-weight:700">6/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:60%;height:100%;background:#C9A45B;border-radius:99px"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Tom VendaMais</span><span style="font-weight:700">7/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:70%;height:100%;background:#C9A45B;border-radius:99px"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>CTA</span><span style="font-weight:700">9/10</span></div><div style="height:4px;background:#EEEBE0;border-radius:99px"><div style="width:90%;height:100%;background:#2F7D5C;border-radius:99px"></div></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:12px">Diagnóstico por slide — carrossel-cooperativas-v2.pdf</div>
+                  <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:14px">
+                    <div style="aspect-ratio:4/5;background:#1E3A43;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#C9A45B;font-size:11px;font-weight:700">1</div>
+                    <div style="aspect-ratio:4/5;background:#243F49;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700">2</div>
+                    <div style="aspect-ratio:4/5;background:#1E3A43;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700">3</div>
+                    <div style="aspect-ratio:4/5;background:#243F49;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700">4</div>
+                    <div style="aspect-ratio:4/5;background:#1E3A43;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700;border:2px solid #C9A45B">5</div>
+                    <div style="aspect-ratio:4/5;background:#243F49;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700">6</div>
+                    <div style="aspect-ratio:4/5;background:#1E3A43;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700;border:2px solid #C9A45B">7</div>
+                    <div style="aspect-ratio:4/5;background:#243F49;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8AA2A9;font-size:11px;font-weight:700">8</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.55">
+                    <div style="display:flex;gap:10px"><span style="font-weight:700;color:#2F7D5C;flex-shrink:0">S1 ✓</span><span style="color:#4C5B60">Pergunta forte, tipografia correta. Manteve o roteiro aprovado.</span></div>
+                    <div style="display:flex;gap:10px"><span style="font-weight:700;color:#2F7D5C;flex-shrink:0">S3 ✓</span><span style="color:#4C5B60">Dado 68% em destaque máximo, como pedido. Bom contraste.</span></div>
+                    <div style="display:flex;gap:10px"><span style="font-weight:700;color:#A94A38;flex-shrink:0">S5 ✕</span><span style="color:#4C5B60">3 linhas de texto — acima do limite para leitura mobile. Cortar a segunda frase.</span></div>
+                    <div style="display:flex;gap:10px"><span style="font-weight:700;color:#A94A38;flex-shrink:0">S7 ✕</span><span style="color:#4C5B60">Usa "revolucionar a operação" — fora do vocabulário aprovado. Trocar por "reorganizar a operação comercial".</span></div>
+                  </div>
+                </div>
+
+                <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                  <div style="background:#FBF0ED;border:1px solid #EDD2CA;border-radius:12px;padding:18px 20px">
+                    <div style="font-size:12px;font-weight:700;color:#A94A38;margin-bottom:8px">Ajustes obrigatórios (2)</div>
+                    <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">1. Reduzir texto do slide 5 para no máximo 2 linhas.<br>2. Substituir "revolucionar" no slide 7 pelo vocabulário aprovado.</div>
+                  </div>
+                  <div style="background:#FBF6E9;border:1px solid #EBDFC0;border-radius:12px;padding:18px 20px">
+                    <div style="font-size:12px;font-weight:700;color:#8A6A24;margin-bottom:8px">Ajustes recomendados (3)</div>
+                    <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">1. Aumentar o corpo do texto nos slides 2 e 6 (+2pt).<br>2. Testar o slide 4 com barras horizontais.<br>3. Incluir o logo menor no slide 1.</div>
+                  </div>
+                </div>
+
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <div style="font-size:13px;font-weight:700">Mensagem pronta para a agência</div>
+                    <button onClick="{{ toastCopy }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Copiar</button>
+                  </div>
+                  <div style="font-size:13px;color:#4C5B60;line-height:1.7;background:#FBFAF6;border:1px solid #EEEBE0;border-radius:8px;padding:14px 16px">Olá, time — a v2 evoluiu bem e está próxima da aprovação. Precisamos de dois ajustes antes de fechar: (1) o slide 5 passou do limite de leitura mobile, cortar a segunda frase; (2) no slide 7, trocar "revolucionar a operação" por "reorganizar a operação comercial", que é o vocabulário da campanha. Se conseguirem também aumentar 2pt o corpo dos slides 2 e 6, melhor ainda. Prazo combinado: 2 dias úteis. Obrigado!</div>
+                </div>
+
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:12px">Comentários de revisão</div>
+                  <sc-for list="{{ agComments }}" as="c" hint-placeholder-count="2">
+                    <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #F4F2EC">
+                      <div style="width:28px;height:28px;border-radius:50%;background:#EAE7DC;color:#4C5B60;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">{{ c.ini }}</div>
+                      <div style="min-width:0">
+                        <div style="font-size:12px"><span style="font-weight:700">{{ c.who }}</span><span style="color:#8B8878"> · {{ c.when }}</span></div>
+                        <div style="font-size:13px;color:#4C5B60;line-height:1.55;margin-top:2px">{{ c.txt }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;gap:10px;margin-top:14px">
+                    <input data-role="ag-draft" onChange="{{ onDraft }}" placeholder="Escreva um comentário sobre a peça ou um slide específico…" style="flex:1;border:1px solid #CFC9B8;border-radius:8px;padding:10px 12px;font-size:13px;background:#FBFAF6" style-focus="border-color:#9C7B37;outline:none">
+                    <button onClick="{{ onAddComment }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Comentar</button>
+                  </div>
+                  <div style="display:flex;gap:10px;margin-top:16px;border-top:1px solid #EEEBE0;padding-top:16px">
+                    <button onClick="{{ onAgAjustes }}" style="background:#FFFFFF;border:1px solid #E0B7AC;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:#A94A38;cursor:pointer" style-hover="background:#FBF0ED">Solicitar ajustes</button>
+                    <div style="flex:1"></div>
+                    <button onClick="{{ onAgFab }}" style="background:{{ agFabBg }};border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer">{{ agFabLabel }}</button>
+                    <button onClick="{{ onAgRaul }}" style="background:{{ agRaulBg }};border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer">{{ agRaulLabel }}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goApr }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Aprovações →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 12 APROVAÇÕES ============ -->
+        <sc-if value="{{ sApr }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="12 · Aprovações e versões">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 12 · Revisão</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Aprovações e versões</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Cada peça tem status, versões e histórico de quem aprovou e quando. Nada é publicado sem aprovação humana.</p>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+              <div style="display:grid;grid-template-columns:2.2fr 1fr .6fr 1.1fr 1.4fr;font-size:12px;color:#66757B;font-weight:700;border-bottom:1px solid #EEEBE0">
+                <div style="padding:12px 22px">Peça</div><div style="padding:12px">Tipo</div><div style="padding:12px">Versão</div><div style="padding:12px">Status</div><div style="padding:12px 22px 12px 12px">Ações</div>
+              </div>
+              <sc-for list="{{ pieces }}" as="p" hint-placeholder-count="8">
+                <div style="display:grid;grid-template-columns:2.2fr 1fr .6fr 1.1fr 1.4fr;font-size:13px;border-bottom:1px solid #F4F2EC;align-items:center">
+                  <div style="padding:12px 22px;font-weight:600">{{ p.nome }}</div>
+                  <div style="padding:12px;color:#66757B;font-size:12.5px">{{ p.tipo }}</div>
+                  <div style="padding:12px;color:#66757B;font-size:12.5px">{{ p.ver }}</div>
+                  <div style="padding:12px"><span style="font-size:11px;font-weight:700;background:{{ p.chipBg }};color:{{ p.chipColor }};border-radius:999px;padding:3px 10px;white-space:nowrap">{{ p.status }}</span></div>
+                  <div style="padding:12px 22px 12px 12px;display:flex;gap:8px">
+                    <button onClick="{{ p.onApprove }}" style="background:#FFFFFF;border:1px solid {{ p.btnBorder }};border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;color:{{ p.btnColor }};cursor:{{ p.btnCursor }}">{{ p.btnLabel }}</button>
+                    <button onClick="{{ p.onVer }}" style="background:transparent;border:none;color:#9C7B37;font-size:12px;font-weight:700;cursor:pointer">Versões</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Registro de aprovações</div>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#4C5B60;line-height:1.5">
+                  <div><strong style="color:#1D2C31">Análise estratégica v2</strong> — aprovada por Fabiano (12/06, 10h22) e Raul (12/06, 15h47)</div>
+                  <div><strong style="color:#1D2C31">Página de obrigado v1</strong> — aprovada por Fabiano (14/06, 9h10)</div>
+                  <div><strong style="color:#1D2C31">Copies de anúncios v2</strong> — aprovadas por Fabiano (15/06, 17h32)</div>
+                  <div><strong style="color:#1D2C31">Roteiro do carrossel v2</strong> — aprovado por Fabiano e Raul (16/06)</div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px">Versionamento</div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.6">Cada edição ou regeneração cria uma nova versão. Compare a atual com a anterior, restaure versões antigas e exporte o relatório completo de aprovações.</div>
+                <div style="display:flex;gap:10px;margin-top:12px">
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Comparar versões</button>
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Exportar relatório</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goChk }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Checklist final →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 13 CHECKLIST ============ -->
+        <sc-if value="{{ sChk }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="13 · Checklist final">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 13 · Lançamento</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Checklist final de publicação</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">Revisão automática + verificação humana. A campanha só é marcada como publicada com o checklist completo.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:8px 22px 16px">
+                <sc-for list="{{ checks }}" as="c" hint-placeholder-count="8">
+                  <div>
+                    <sc-if value="{{ c.hasG }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#9C7B37;font-weight:700;padding:16px 0 4px">{{ c.g }}</div>
+                    </sc-if>
+                    <div onClick="{{ c.onTog }}" style="display:flex;align-items:center;gap:12px;padding:8px 0;cursor:pointer" style-hover="opacity:.8">
+                      <div style="width:20px;height:20px;border-radius:6px;background:{{ c.boxBg }};border:1.5px solid {{ c.boxBorder }};display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:12px;font-weight:700;flex-shrink:0;transition:all .15s">{{ c.mark }}</div>
+                      <div style="font-size:13.5px;color:{{ c.txtColor }};text-decoration:{{ c.deco }}">{{ c.t }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                  <div style="font-size:13px;font-weight:700">Progresso</div>
+                  <div style="font-family:'Source Serif 4',serif;font-size:32px;font-weight:600;margin-top:6px">{{ checkDone }}<span style="font-size:16px;color:#8B8878"> de {{ checkTotal }}</span></div>
+                  <div style="height:6px;background:#EEEBE0;border-radius:99px;overflow:hidden;margin-top:10px"><div style="width:{{ checkPct }};height:100%;background:#2F7D5C;transition:width .3s"></div></div>
+                  <button onClick="{{ onPublish }}" style="width:100%;margin-top:16px;background:{{ pubBg }};border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:{{ pubCursor }};transition:background .2s">{{ pubLabel }}</button>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                  <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Revisor de qualidade da IA</div>
+                  <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;line-height:1.5">
+                    <div style="color:#2F7D5C">✓ Tese específica e nicho bem definido</div>
+                    <div style="color:#2F7D5C">✓ LP pronta para WordPress e responsiva</div>
+                    <div style="color:#2F7D5C">✓ Régua consultiva, sem agressividade</div>
+                    <div style="color:#2F7D5C">✓ Cases com permissão confirmada</div>
+                    <div style="color:#8A6A24">⚠ Formulário com 6 campos — considerar remover WhatsApp no público amplo</div>
+                    <div style="color:#2F7D5C">✓ Plano de medição com UTMs completo</div>
+                  </div>
+                </div>
+                <sc-if value="{{ dicas }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#FBFAF6;border:1px solid #E9E3D2;border-radius:12px;padding:16px 18px;font-size:12.5px;color:#4C5B60;line-height:1.55"><strong style="color:#1D2C31">Regra de ouro.</strong> Nenhum disparo, publicação ou abordagem é automática. O checklist garante que a revisão humana aconteceu.</div>
+                </sc-if>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:18px">
+              <button onClick="{{ goExp }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Exportação →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 14 EXPORTAÇÃO ============ -->
+        <sc-if value="{{ sExp }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="14 · Exportação">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 14 · Lançamento</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Exportação final</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:640px">O pacote completo da campanha, organizado por destino: WordPress, Bitrix, LinkedIn e agência.</p>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;background:#142B33;color:#FFFFFF;border-radius:6px;padding:4px 10px">WordPress</span><span style="font-size:13px;font-weight:700">Landing page + obrigado</span></div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">landing-page.html · obrigado.html · estilos.css · 6 imagens · blocos-gutenberg.md · instruções de publicação</div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <button onClick="{{ toastZip }}" style="background:#142B33;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Baixar ZIP</button>
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Copiar HTML</button>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;background:#3D6570;color:#FFFFFF;border-radius:6px;padding:4px 10px">Bitrix</span><span style="font-size:13px;font-weight:700">Plano manual completo</span></div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">Campos, tags, origem, score, régua com 5 e-mails, tarefas comerciais e checklist de implementação — em documento copiável</div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Copiar plano</button>
+                  <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#9C7B37">Baixar PDF</button>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;background:#9C7B37;color:#FFFFFF;border-radius:6px;padding:4px 10px">LinkedIn</span><span style="font-size:13px;font-weight:700">Conteúdo + mídia</span></div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">4 posts orgânicos · 4 copies de anúncio com variações · estratégia de públicos e orçamento · UTMs · checklist do Insight Tag</div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Copiar tudo</button>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 22px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;background:#A94A38;color:#FFFFFF;border-radius:6px;padding:4px 10px">Agência</span><span style="font-size:13px;font-weight:700">Briefing + peça aprovada</span></div>
+                <div style="font-size:12.5px;color:#4C5B60;line-height:1.7">Briefing enviado · roteiro do carrossel v2 · carrossel final aprovado (quando fechar) · histórico de feedback</div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <button onClick="{{ toastCopy }}" style="background:#142B33;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Baixar histórico</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#142B33;border-radius:12px;padding:20px 24px;color:#E9EFF0;display:flex;align-items:center;gap:18px;margin-bottom:16px">
+              <div style="flex:1">
+                <div style="font-size:13.5px;font-weight:700">campanha.json — espelho completo no Supabase</div>
+                <div style="font-size:12.5px;color:#8AA2A9;margin-top:3px">Todos os inputs, versões, aprovações e outputs da campanha ficam gravados como histórico e inteligência para os próximos nichos.</div>
+              </div>
+              <button onClick="{{ toastCopy }}" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;color:#E9EFF0;cursor:pointer;flex-shrink:0" style-hover="background:rgba(255,255,255,.18)">Baixar JSON</button>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goRes }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Continuar para Resultados →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ 15 RESULTADOS ============ -->
+        <sc-if value="{{ sRes }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="15 · Resultados e aprendizados">
+            <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9C7B37;font-weight:700">Etapa 15 · Pós-campanha</div>
+            <h1 style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;margin:6px 0 4px">Resultados e aprendizados</h1>
+            <p style="font-size:14px;color:#66757B;margin:0 0 22px;max-width:660px">Exemplo com a campanha encerrada de maio — Agroindústria de Insumos. Registre resultados semanalmente; o relatório final orienta o próximo nicho.</p>
+
+            <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 24px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:16px">Funil da campanha — Agroindústria · Maio 2026</div>
+              <div data-grid style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">128k</div><div style="font-size:11px;color:#66757B;margin-top:2px">Impressões</div><div style="height:4px;background:#1E3A43;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">2.340</div><div style="font-size:11px;color:#66757B;margin-top:2px">Cliques</div><div style="height:4px;background:#2C5560;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">214</div><div style="font-size:11px;color:#66757B;margin-top:2px">Leads</div><div style="height:4px;background:#3D6570;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">18</div><div style="font-size:11px;color:#66757B;margin-top:2px">Qualificados</div><div style="height:4px;background:#9C7B37;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:#9C7B37">3</div><div style="font-size:11px;color:#66757B;margin-top:2px">Super PCIs</div><div style="height:4px;background:#C9A45B;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">2</div><div style="font-size:11px;color:#66757B;margin-top:2px">Reuniões</div><div style="height:4px;background:#2F7D5C;border-radius:99px;margin-top:8px"></div></div>
+                <div style="text-align:center"><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">1</div><div style="font-size:11px;color:#66757B;margin-top:2px">Proposta</div><div style="height:4px;background:#2F7D5C;border-radius:99px;margin-top:8px"></div></div>
+              </div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 20px"><div style="font-size:12px;color:#66757B">Investimento</div><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;margin-top:2px">R$ 7.800</div><div style="font-size:11px;color:#66757B;margin-top:2px">CPL R$ 36 · CTR 1,8%</div></div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 20px"><div style="font-size:12px;color:#66757B">Conversão da LP</div><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;margin-top:2px">23%</div><div style="font-size:11px;color:#2F7D5C;margin-top:2px">Acima da meta de 15%</div></div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 20px"><div style="font-size:12px;color:#66757B">E-mails da régua</div><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;margin-top:2px">52%</div><div style="font-size:11px;color:#66757B;margin-top:2px">Abertura média · 9 respostas</div></div>
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:16px 20px"><div style="font-size:12px;color:#66757B">Pipeline gerado</div><div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;margin-top:2px">R$ 240k</div><div style="font-size:11px;color:#66757B;margin-top:2px">1 proposta em negociação</div></div>
+            </div>
+
+            <div data-grid style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:16px;align-items:start">
+              <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:20px 24px">
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Relatório final — resumo executivo</div>
+                <div style="font-size:13.5px;color:#4C5B60;line-height:1.7">A campanha validou a tese de que decisores de agroindústria respondem a conteúdo de benchmark setorial. O Document Ad gerou os leads de maior qualidade (CPL 40% maior, mas 3× mais qualificados que o Lead Gen Form). Duas das três contas-alvo engajadas chegaram à reunião executiva. O gargalo foi a passagem lead qualificado → reunião: o comercial demorou em média 3,2 dias para a primeira abordagem — acima do padrão de 24h para super PCI.</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;font-size:13px;line-height:1.55">
+                  <div style="display:flex;gap:10px"><span style="color:#2F7D5C;font-weight:700;flex-shrink:0">Repetir</span><span style="color:#4C5B60">Document Ad como formato principal para decisores</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:#2F7D5C;font-weight:700;flex-shrink:0">Repetir</span><span style="color:#4C5B60">Post pessoal do Raul — melhor CTR orgânico da campanha</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:#A94A38;font-weight:700;flex-shrink:0">Mudar</span><span style="color:#4C5B60">SLA de abordagem de super PCI: criar alerta imediato no Bitrix</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:#A94A38;font-weight:700;flex-shrink:0">Mudar</span><span style="color:#4C5B60">Formulário: campo "desafio comercial" gerou abandono no mobile</span></div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#142B33;border-radius:12px;padding:20px 22px;color:#E9EFF0">
+                  <div style="font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:#C9A45B;font-weight:700;margin-bottom:8px">Decisão da campanha</div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <span style="font-size:12px;background:rgba(255,255,255,.08);color:#8AA2A9;border-radius:999px;padding:5px 13px">Repetir</span>
+                    <span style="font-size:12px;font-weight:700;background:#C9A45B;color:#142B33;border-radius:999px;padding:5px 13px">Ajustar e escalar</span>
+                    <span style="font-size:12px;background:rgba(255,255,255,.08);color:#8AA2A9;border-radius:999px;padding:5px 13px">Pausar</span>
+                    <span style="font-size:12px;background:rgba(255,255,255,.08);color:#8AA2A9;border-radius:999px;padding:5px 13px">Encerrar</span>
+                  </div>
+                  <div style="font-size:12.5px;color:#B9CBD0;line-height:1.6;margin-top:12px">Repetir no segundo semestre com foco em cooperativas agro — cruzamento dos dois nichos com melhor resposta.</div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E4E0D3;border-radius:12px;padding:18px 20px">
+                  <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Qualitativo</div>
+                  <div style="font-size:12.5px;color:#4C5B60;line-height:1.6;font-style:italic">"Primeiro material que fala da nossa realidade sem genérico de vendas." — lead qualificado, diretor comercial</div>
+                </div>
+                <button onClick="{{ toastCopy }}" style="background:#FFFFFF;border:1px solid #CFC9B8;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#1D2C31;cursor:pointer" style-hover="border-color:#9C7B37">Exportar relatório final</button>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button onClick="{{ goDash }}" style="background:#142B33;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;color:#FFFFFF;cursor:pointer" style-hover="background:#1E3E49">Voltar ao Dashboard</button>
+            </div>
+          </div>
+        </sc-if>
+        <!--SCREENS-->
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#142B33;color:#F4F2EC;font-size:13px;font-weight:600;padding:11px 22px;border-radius:999px;box-shadow:0 8px 24px rgba(20,43,51,.35);animation:toastIn .25s ease;z-index:50">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mostrarDicas&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Experiência&quot;},&quot;telaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dash&quot;,&quot;options&quot;:[&quot;dash&quot;,&quot;nova&quot;,&quot;mat&quot;,&quot;brand&quot;,&quot;cases&quot;,&quot;est&quot;,&quot;lp&quot;,&quot;bit&quot;,&quot;cont&quot;,&quot;ads&quot;,&quot;ag&quot;,&quot;apr&quot;,&quot;chk&quot;,&quot;exp&quot;,&quot;res&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Experiência&quot;}}">
+class Component extends DCLogic {
+  state = {
+    nav: null,
+    lpTab: 'blocos',
+    prev: 'desktop',
+    csTab: 'posts',
+    estOk: true,
+    briefSent: false,
+    pub: false,
+    agFab: false,
+    agRaul: false,
+    agVer: 'v2',
+    toast: null,
+    agComments: [
+      { who: 'Fabiano', when: 'ontem, 16h40', txt: 'Slide 1 melhorou muito na v2. Ainda acho o slide 5 denso demais para celular — cortar a segunda frase.' },
+      { who: 'Raul', when: 'hoje, 9h15', txt: 'Tese está bem traduzida. Só trocaria "revolucionar" no slide 7; não é o nosso vocabulário. Algo como "reorganizar a operação comercial".' }
+    ],
+    blocks: [
+      { id: 'hero', nome: 'Hero', desc: 'Logo, título forte, subtítulo, mockup do report e CTA principal', on: true, edit: false, copy: 'O novo ciclo comercial das cooperativas de crédito\n\nComo as cooperativas que mais crescem estão reorganizando suas equipes comerciais para competir com bancos digitais — sem perder o relacionamento que as diferencia.' },
+      { id: 'contexto', nome: 'Contexto do segmento', desc: 'Por que o tema importa agora', on: true, edit: false, copy: 'O cooperativismo de crédito cresceu 2 dígitos ao ano na última década. Mas o crescimento trouxe um problema silencioso: carteiras infladas, gerentes reativos e metas batidas pela maré — não pelo método.' },
+      { id: 'dados', nome: 'Dados principais', desc: 'Números extraídos do Special Report', on: true, edit: false, copy: '68% das cooperativas não têm processo formal de prospecção PJ · 3,4x é a diferença de conversão entre gerentes com e sem cadência definida · 41% dos associados PJ concentram relacionamento em um único produto.' },
+      { id: 'desafios', nome: 'Desafios centrais', desc: 'Lista de desafios sem entregar todo o relatório', on: true, edit: false, copy: 'Transformar gerentes de conta em consultores comerciais · Ativar a base PJ subutilizada · Criar cadência de prospecção sem descaracterizar o atendimento cooperativista · Medir esforço comercial, não só resultado.' },
+      { id: 'paraquem', nome: 'Para quem é', desc: 'Cargos e perfis que devem baixar o material', on: true, edit: false, copy: 'Diretores e superintendentes de negócios, gerentes regionais e responsáveis por desenvolvimento comercial de cooperativas singulares e centrais.' },
+      { id: 'conteudo', nome: 'O que você encontrará', desc: 'Resumo do conteúdo do PDF', on: true, edit: false, copy: 'Diagnóstico do momento comercial do setor · Benchmark de estrutura comercial de 40 cooperativas · O modelo de esteira comercial VendaMais aplicado ao crédito · Roteiro de 90 dias para reorganizar a equipe.' },
+      { id: 'sobre', nome: 'Sobre a VendaMais', desc: 'Autoridade sem parecer propaganda', on: true, edit: false, copy: 'Há mais de 25 anos a VendaMais ajuda empresas brasileiras a estruturar suas áreas comerciais. Trabalhamos com diagnóstico, consultoria, treinamento e desenvolvimento de lideranças de vendas.' },
+      { id: 'cases', nome: 'Cases e provas', desc: 'Logos, depoimentos e resultados aprovados', on: true, edit: false, copy: 'Case CrediCampo: reorganização da esteira comercial PJ em 6 meses. Depoimento de Marcos Antunes, Diretor de Negócios.' },
+      { id: 'ctamid', nome: 'CTA intermediário', desc: 'Reforço do convite', on: true, edit: false, copy: 'Baixe o Special Report e receba também o infográfico com o benchmark do setor.' },
+      { id: 'conversa', nome: 'Conversa executiva', desc: 'Próximo passo para quem quer discutir o tema', on: true, edit: false, copy: 'Prefere discutir o diagnóstico da sua cooperativa? Agende uma conversa executiva de 30 minutos com nosso time — sem compromisso comercial.' },
+      { id: 'form', nome: 'Formulário', desc: 'Campos recomendados e consentimento', on: true, edit: false, copy: 'Nome · E-mail corporativo · Cooperativa · Cargo · WhatsApp · Principal desafio comercial. Consentimento LGPD incluído.' },
+      { id: 'faq', nome: 'FAQ', desc: 'Dúvidas sobre o relatório, envio e contato', on: false, edit: false, copy: 'O material é gratuito? · Vou receber ligações? · Posso compartilhar com minha equipe? · Como meus dados serão usados?' },
+      { id: 'rodape', nome: 'Rodapé', desc: 'Contatos, links e política de privacidade', on: true, edit: false, copy: 'VendaMais · vendamais.com.br · Política de privacidade · LinkedIn · WhatsApp comercial.' }
+    ],
+    emails: [
+      { n: 'E-mail 1', assunto: 'Seu Special Report: O novo ciclo comercial das cooperativas de crédito', prazo: 'Imediato', cond: 'Formulário enviado', open: false, corpo: 'Olá, {nome}.\n\nSegue o link para o Special Report que você solicitou. São 32 páginas com o benchmark de estrutura comercial de 40 cooperativas e um roteiro de 90 dias.\n\nSe preferir a versão resumida, o infográfico anexo cobre os principais números em 1 página.\n\nBoa leitura,\nEquipe VendaMais' },
+      { n: 'E-mail 2', assunto: 'O número que mais chamou atenção dos diretores', prazo: 'D+2', cond: 'Abriu e-mail 1', open: false, corpo: '{nome}, um dado do relatório tem gerado mais conversa: 68% das cooperativas não têm processo formal de prospecção PJ.\n\nNa página 14 mostramos como as que têm processo convertem 3,4x mais. Vale a leitura dirigida.\n\nSe quiser, posso apontar em qual estágio a {empresa} provavelmente está.' },
+      { n: 'E-mail 3', assunto: 'Como a CrediCampo reorganizou a esteira comercial PJ', prazo: 'D+5', cond: 'Clicou em qualquer link', open: false, corpo: '{nome}, compartilho um caso próximo da sua realidade.\n\nA CrediCampo reorganizou a esteira comercial PJ em 6 meses: papéis redesenhados, cadência de prospecção e rotina de gestão semanal. O diretor de negócios conta os bastidores neste depoimento curto.\n\nSe fizer sentido, apresento o desenho do projeto.' },
+      { n: 'E-mail 4', assunto: 'Uma conversa de 30 minutos sobre a sua operação', prazo: 'D+8', cond: 'Score acima de 60', open: false, corpo: '{nome}, acompanhei seu interesse no material sobre estrutura comercial de cooperativas.\n\nProponho uma conversa executiva de 30 minutos para discutir o diagnóstico da {empresa} — sem pauta comercial, com nosso mapa do setor na mesa.\n\nTem agenda nesta ou na próxima semana?' },
+      { n: 'E-mail 5', assunto: 'Encerrando por aqui (por enquanto)', prazo: 'D+12', cond: 'Sem resposta', open: false, corpo: '{nome}, não quero insistir além do útil.\n\nDeixo apenas o infográfico com o benchmark do setor, que resume o essencial. Quando o tema entrar na pauta da diretoria, será um prazer retomar.\n\nSeguimos à disposição.' }
+    ],
+    checks: [
+      { g: 'Conteúdo', t: 'Tese central aprovada por Fabiano e Raul', done: true },
+      { g: '', t: 'LP revisada: copy, CTAs, formulário e página de obrigado', done: true },
+      { g: '', t: 'Cases utilizados com permissão confirmada', done: true },
+      { g: 'Publicação', t: 'HTML colado no WordPress e URLs de imagem substituídas', done: true },
+      { g: '', t: 'Formulário testado com redirecionamento para página de obrigado', done: false },
+      { g: '', t: 'Versão mobile testada em celular real', done: false },
+      { g: 'Mídia', t: 'Campanhas LinkedIn configuradas com UTMs corretas', done: true },
+      { g: '', t: 'Insight Tag verificada e conversões configuradas', done: false },
+      { g: 'Comercial', t: 'Régua e score implementados manualmente no Bitrix', done: true },
+      { g: '', t: 'Comercial orientado sobre critérios de abordagem de super PCI', done: false },
+      { g: 'Medição', t: 'Planilha de resultados criada com metas da campanha', done: true },
+      { g: '', t: 'Rotina semanal de registro de métricas agendada', done: false }
+    ],
+    pieces: [
+      { nome: 'Análise estratégica', tipo: 'Estratégia', ver: 'v2', status: 'Aprovado' },
+      { nome: 'Landing page — Cooperativas de Crédito', tipo: 'LP WordPress', ver: 'v3', status: 'Em revisão Raul' },
+      { nome: 'Página de obrigado', tipo: 'LP WordPress', ver: 'v1', status: 'Aprovado' },
+      { nome: 'Régua de relacionamento (5 e-mails)', tipo: 'Bitrix manual', ver: 'v2', status: 'Em revisão Fabiano' },
+      { nome: 'Posts orgânicos (6 peças)', tipo: 'LinkedIn', ver: 'v1', status: 'Gerado pela IA' },
+      { nome: 'Copies de anúncios (4 + variações)', tipo: 'LinkedIn Ads', ver: 'v2', status: 'Aprovado' },
+      { nome: 'Roteiro do carrossel', tipo: 'Agência', ver: 'v2', status: 'Aprovado' },
+      { nome: 'Carrossel final da agência', tipo: 'Agência', ver: 'v2', status: 'Ajustes solicitados' }
+    ]
+  };
+
+  tst(msg) {
+    clearTimeout(this._t);
+    this.setState({ toast: msg });
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+  go(id) {
+    this.setState({ nav: id });
+    const sc = document.querySelector('[data-role="content"]');
+    if (sc && sc.parentElement) sc.parentElement.scrollTop = 0;
+  }
+  chipC(status) {
+    const m = {
+      'Rascunho': ['#EEEBE0', '#66757B'],
+      'Gerado pela IA': ['#E5EBEC', '#3D6570'],
+      'Em revisão Fabiano': ['#F3ECDA', '#8A6A24'],
+      'Em revisão Raul': ['#F3ECDA', '#8A6A24'],
+      'Ajustes solicitados': ['#F6E7E2', '#A94A38'],
+      'Aprovado': ['#E4F0E8', '#2F7D5C'],
+      'Publicado': ['#142B33', '#F4F2EC'],
+      'Versão final': ['#E4F0E8', '#2F7D5C']
+    };
+    return m[status] || m['Rascunho'];
+  }
+
+  renderVals() {
+    const S = this.state;
+    const nav = S.nav || (this.props.telaInicial || 'dash');
+    const screens = [
+      ['VISÃO GERAL', 'dash', '01', 'Dashboard'],
+      ['CRIAÇÃO', 'nova', '02', 'Nova campanha'],
+      [null, 'mat', '03', 'Upload de materiais'],
+      [null, 'brand', '04', 'Brand Kit VendaMais'],
+      [null, 'cases', '05', 'Biblioteca de cases'],
+      ['INTELIGÊNCIA', 'est', '06', 'Análise estratégica'],
+      ['PRODUÇÃO', 'lp', '07', 'Landing Page Builder'],
+      [null, 'bit', '08', 'Bitrix Manual Planner'],
+      [null, 'cont', '09', 'Content Studio'],
+      [null, 'ads', '10', 'LinkedIn Ads Planner'],
+      ['REVISÃO', 'ag', '11', 'Agency Review Hub'],
+      [null, 'apr', '12', 'Aprovações e versões'],
+      ['LANÇAMENTO', 'chk', '13', 'Checklist final'],
+      [null, 'exp', '14', 'Exportação'],
+      ['PÓS-CAMPANHA', 'res', '15', 'Resultados e aprendizados']
+    ];
+    const navItems = screens.map(([sec, id, num, label]) => {
+      const act = nav === id;
+      const done = ['nova','mat','brand','cases','est','lp','bit','cont','ads'].includes(id) && !act;
+      return {
+        hasSection: !!sec, section: sec || '', label,
+        num: done ? '✓' : num,
+        color: act ? '#EFDFB9' : '#9FB4BA',
+        numColor: act ? '#C9A45B' : (done ? '#6E9880' : '#5E7B84'),
+        mBg: act ? '#C9A45B' : 'rgba(255,255,255,.08)',
+        mColor: act ? '#142B33' : '#B9CBD0',
+        bg: act ? 'rgba(201,164,91,.13)' : 'transparent',
+        border: act ? '#C9A45B' : 'transparent',
+        weight: act ? '700' : '400',
+        onClick: () => this.go(id)
+      };
+    });
+
+    const flags = {};
+    screens.forEach(([, id]) => { flags['s' + id.charAt(0).toUpperCase() + id.slice(1)] = nav === id; });
+
+    // LP builder
+    const mv = (i, d) => {
+      const b = [...S.blocks];
+      const j = i + d;
+      if (j < 0 || j >= b.length) return;
+      b[i] = { ...b[i], edit: false };
+      b[j] = { ...b[j], edit: false };
+      [b[i], b[j]] = [b[j], b[i]];
+      this.setState({ blocks: b });
+    };
+    const lpBlocks = S.blocks.map((b, i) => ({
+      ...b,
+      idx: i + 1,
+      opacity: b.on ? '1' : '.45',
+      togBg: b.on ? '#2F7D5C' : '#CFC9B8',
+      togX: b.on ? '16px' : '2px',
+      togLabel: b.on ? 'Ativo' : 'Inativo',
+      togColor: b.on ? '#2F7D5C' : '#8B8878',
+      editLabel: b.edit ? 'Fechar' : 'Editar',
+      onTog: () => { const bl = [...S.blocks]; bl[i] = { ...bl[i], on: !bl[i].on }; this.setState({ blocks: bl }); },
+      onEdit: () => { const bl = [...S.blocks]; bl[i] = { ...bl[i], edit: !bl[i].edit }; this.setState({ blocks: bl }); },
+      onCopy: (e) => { const bl = [...S.blocks]; bl[i] = { ...bl[i], copy: e.target.value }; this.setState({ blocks: bl }); },
+      onUp: () => mv(i, -1),
+      onDown: () => mv(i, 1),
+      onRegen: () => this.tst('Bloco "' + b.nome + '" regenerado pela IA — revise antes de aprovar')
+    }));
+    const enabledBlocks = S.blocks.filter(b => b.on && b.id !== 'hero').map(b => ({ ...b, snippet: b.copy.length > 150 ? b.copy.slice(0, 150) + '…' : b.copy }));
+    const heroOn = S.blocks.find(b => b.id === 'hero').on;
+    const heroParts = S.blocks.find(b => b.id === 'hero').copy.split('\n\n');
+
+    const mkTabs = (defs, cur, key) => defs.map(([id, label]) => ({
+      label,
+      bg: cur === id ? '#142B33' : 'transparent',
+      color: cur === id ? '#FFFFFF' : '#4C5B60',
+      onClick: () => this.setState({ [key]: id })
+    }));
+    const lpTabs = mkTabs([['blocos', 'Blocos da página'], ['previa', 'Prévia'], ['export', 'Exportar para WordPress']], S.lpTab, 'lpTab');
+    const csTabs = mkTabs([['posts', 'Posts orgânicos'], ['ads', 'Copies de anúncios'], ['carrossel', 'Roteiro do carrossel'], ['brief', 'Briefing da agência']], S.csTab, 'csTab');
+    const prevTabs = mkTabs([['desktop', 'Desktop'], ['mobile', 'Mobile']], S.prev, 'prev');
+
+    // emails
+    const emails = S.emails.map((e, i) => ({
+      ...e,
+      toggleLabel: e.open ? 'Ocultar e-mail' : 'Ver e-mail completo',
+      onToggle: () => { const em = [...S.emails]; em[i] = { ...em[i], open: !em[i].open }; this.setState({ emails: em }); }
+    }));
+
+    // checklist
+    const doneN = S.checks.filter(c => c.done).length;
+    const pct = Math.round(doneN / S.checks.length * 100);
+    const checks = S.checks.map((c, i) => ({
+      ...c,
+      hasG: !!c.g,
+      boxBg: c.done ? '#2F7D5C' : '#FFFFFF',
+      boxBorder: c.done ? '#2F7D5C' : '#CFC9B8',
+      mark: c.done ? '✓' : '',
+      deco: c.done ? 'line-through' : 'none',
+      txtColor: c.done ? '#8B968F' : '#1D2C31',
+      onTog: () => { const ck = [...S.checks]; ck[i] = { ...ck[i], done: !ck[i].done }; this.setState({ checks: ck }); }
+    }));
+
+    // approvals
+    const pieces = S.pieces.map((p, i) => {
+      const [bg, color] = this.chipC(p.status);
+      const canApprove = p.status !== 'Aprovado' && p.status !== 'Versão final' && p.status !== 'Publicado';
+      return {
+        ...p, chipBg: bg, chipColor: color,
+        btnLabel: canApprove ? 'Aprovar' : 'Aprovado ✓',
+        btnColor: canApprove ? '#1D2C31' : '#2F7D5C',
+        btnBorder: canApprove ? '#CFC9B8' : '#BFDCCB',
+        btnCursor: canApprove ? 'pointer' : 'default',
+        onApprove: () => {
+          if (!canApprove) return;
+          const ps = [...S.pieces]; ps[i] = { ...ps[i], status: 'Aprovado' }; this.setState({ pieces: ps });
+          this.tst('"' + p.nome + '" aprovado — registrado no histórico');
+        },
+        onVer: () => this.tst('Histórico de versões de "' + p.nome + '" (' + p.ver + ')')
+      };
+    });
+
+    // agency
+    const agFinal = S.agFab && S.agRaul;
+    const agStatus = agFinal ? 'Versão final' : (S.agFab || S.agRaul ? 'Aprovação parcial' : 'Ajustes solicitados');
+    const agChip = agFinal ? ['#E4F0E8', '#2F7D5C'] : (S.agFab || S.agRaul ? ['#F3ECDA', '#8A6A24'] : ['#F6E7E2', '#A94A38']);
+    const agComments = S.agComments.map(c => ({ ...c, ini: c.who.charAt(0) }));
+    const addComment = () => {
+      const v = (this._draft || '').trim();
+      if (!v) { this.tst('Escreva o comentário antes de registrar'); return; }
+      this.setState({ agComments: [...S.agComments, { who: 'Fabiano', when: 'agora', txt: v }] });
+      this._draft = '';
+      const el = document.querySelector('[data-role="ag-draft"]');
+      if (el) el.value = '';
+      this.tst('Comentário registrado no histórico da peça');
+    };
+
+    const g = id => () => this.go(id);
+    return {
+      ...flags,
+      dicas: this.props.mostrarDicas ?? true,
+      navItems,
+      toast: S.toast, hasToast: !!S.toast,
+      goNova: g('nova'), goMat: g('mat'), goBrand: g('brand'), goCases: g('cases'), goEst: g('est'),
+      goLp: g('lp'), goBit: g('bit'), goCont: g('cont'), goAds: g('ads'), goAg: g('ag'),
+      goApr: g('apr'), goChk: g('chk'), goExp: g('exp'), goRes: g('res'), goDash: g('dash'),
+      toastDup: () => this.tst('Campanha duplicada como rascunho — adapte o tema e os materiais'),
+      toastSave: () => this.tst('Rascunho salvo no histórico'),
+      toastCopy: () => this.tst('Copiado para a área de transferência'),
+      toastZip: () => this.tst('Pacote ZIP gerado: whale-cooperativas-jun2026.zip'),
+      toastBrief: () => { this.setState({ briefSent: true }); this.tst('Briefing enviado para a agência por e-mail'); },
+      briefLabel: S.briefSent ? 'Briefing enviado ✓' : 'Enviar briefing para a agência',
+      briefBg: S.briefSent ? '#2F7D5C' : '#142B33',
+      toastRegen: () => this.tst('Seção regenerada pela IA — compare com a versão anterior antes de aprovar'),
+      estAprovar: () => { this.setState({ estOk: true }); this.tst('Análise estratégica aprovada — próxima etapa: Landing Page Builder'); },
+      estLabel: S.estOk ? 'Análise aprovada ✓' : 'Aprovar análise estratégica',
+      estBg: S.estOk ? '#2F7D5C' : '#142B33',
+      lpTabs, csTabs, prevTabs,
+      lpIsBlocos: S.lpTab === 'blocos', lpIsPrevia: S.lpTab === 'previa', lpIsExport: S.lpTab === 'export',
+      csIsPosts: S.csTab === 'posts', csIsAds: S.csTab === 'ads', csIsCarrossel: S.csTab === 'carrossel', csIsBrief: S.csTab === 'brief',
+      lpBlocks, enabledBlocks, heroOn,
+      heroTitle: heroParts[0] || '', heroSub: heroParts.slice(1).join(' '),
+      prevW: S.prev === 'desktop' ? '100%' : '375px',
+      prevPad: S.prev === 'desktop' ? '48px 56px' : '32px 22px',
+      prevH1: S.prev === 'desktop' ? '30px' : '22px',
+      emails, checks,
+      checkPct: pct + '%', checkDone: doneN, checkTotal: S.checks.length,
+      allDone: doneN === S.checks.length,
+      pubLabel: S.pub ? 'Campanha publicada ✓' : (doneN === S.checks.length ? 'Marcar campanha como publicada' : 'Conclua o checklist para publicar (' + doneN + '/' + S.checks.length + ')'),
+      pubBg: S.pub ? '#2F7D5C' : (doneN === S.checks.length ? '#142B33' : '#CFC9B8'),
+      pubCursor: doneN === S.checks.length || S.pub ? 'pointer' : 'not-allowed',
+      onPublish: () => { if (S.pub) return; if (doneN === S.checks.length) { this.setState({ pub: true }); this.tst('Campanha publicada — registre os resultados semanalmente'); } else this.tst('Complete o checklist para liberar a publicação'); },
+      topChip: S.pub ? 'Campanha publicada' : 'Etapa atual: Avaliação do carrossel',
+      topChipBg: S.pub ? '#E4F0E8' : '#F3ECDA',
+      topChipColor: S.pub ? '#2F7D5C' : '#8A6A24',
+      campStatus: S.pub ? 'Publicada' : 'Em produção',
+      campChipBg: S.pub ? '#E4F0E8' : '#F3ECDA',
+      campChipColor: S.pub ? '#2F7D5C' : '#8A6A24',
+      campSub: S.pub ? 'Publicada — LP no ar, registrando resultados' : 'Etapa 11 de 15 — Avaliação do carrossel',
+      campPct: S.pub ? '100%' : '72%',
+      campBar: S.pub ? '#2F7D5C' : '#C9A45B',
+      pieces,
+      agStatus, agChipBg: agChip[0], agChipColor: agChip[1],
+      agFabLabel: S.agFab ? 'Aprovado por Fabiano ✓' : 'Aprovar como Fabiano',
+      agRaulLabel: S.agRaul ? 'Aprovado por Raul ✓' : 'Aprovar como Raul',
+      agFabBg: S.agFab ? '#2F7D5C' : '#142B33',
+      agRaulBg: S.agRaul ? '#2F7D5C' : '#142B33',
+      onAgFab: () => { this.setState({ agFab: true }); this.tst('Aprovação de Fabiano registrada'); },
+      onAgRaul: () => { this.setState({ agRaul: true }); this.tst('Aprovação de Raul registrada'); },
+      onAgAjustes: () => { this.setState({ agFab: false, agRaul: false }); this.tst('Status alterado para "Ajustes solicitados" — feedback pronto para envio'); },
+      agComments, onDraft: (e) => { this._draft = e.target.value; }, onAddComment: addComment
+    };
+  }
+}
+</script>
+</body>
+</html>
