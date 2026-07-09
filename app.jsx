@@ -79,6 +79,43 @@ function RichText({ text }) {
     return <div key={i} style={{ minHeight: ln.trim() ? undefined : 7 }}>{segs}</div>;
   });
 }
+// Renderiza um corpo "Rótulo: valor" (multi-linha) como campos estruturados
+function Fields({ body }) {
+  const items = [];
+  String(body || '').split('\n').forEach(raw => {
+    const line = raw.replace(/\s+$/, '');
+    const m = line.match(/^\s*([A-Za-zÀ-ÿ][^:\n]{1,40}):\s*(.*)$/);
+    const isLabel = m && m[1].trim().split(/\s+/).length <= 6;
+    if (isLabel) items.push({ label: m[1].trim(), value: m[2] });
+    else if (items.length) items[items.length - 1].value += '\n' + line;
+    else if (line.trim()) items.push({ label: '', value: line });
+  });
+  if (!items.length) return null;
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+    {items.map((it, i) => it.label
+      ? <div key={i}>
+          <div style={{ fontSize: 10.5, letterSpacing: .6, textTransform: 'uppercase', fontWeight: 700, color: '#93763A', marginBottom: 3 }}>{it.label}</div>
+          <div style={{ fontSize: 13.5, color: '#2F3E44', lineHeight: 1.6, whiteSpace: 'pre-line' }}><RichText text={it.value.trim()} /></div>
+        </div>
+      : <div key={i} style={{ fontSize: 13.5, color: '#2F3E44', lineHeight: 1.6, whiteSpace: 'pre-line' }}><RichText text={it.value.trim()} /></div>)}
+  </div>;
+}
+// Escolhe checklist (bullets) ou campos estruturados
+function Body({ body }) {
+  const lines = String(body || '').split('\n').map(x => x.trim()).filter(Boolean);
+  const bl = lines.filter(l => /^[-•*]\s/.test(l));
+  if (bl.length >= 2 && bl.length >= lines.length * 0.6) {
+    return <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+      {bl.map((l, i) => <li key={i} style={{ display: 'flex', gap: 10, fontSize: 13.5, color: '#2F3E44', lineHeight: 1.55 }}>
+        <span style={{ color: '#C9A45B', fontWeight: 800, flexShrink: 0 }}>✓</span><span><RichText text={l.replace(/^[-•*]\s/, '')} /></span>
+      </li>)}
+    </ul>;
+  }
+  return <Fields body={body} />;
+}
+
+const POWER_TEMAS = 'mudança de mentalidade comercial, gestão ativa de carteira, prospecção, abordagem, levantamento de necessidades, SPIN Selling, recomendação, negociação, fechamento e relacionamento sustentável com cooperados';
+const ACIONAVEL = 'REGRAS DE QUALIDADE (obrigatórias): escreva como uma pessoa sênior da VendaMais, nunca como IA. Nada genérico ou institucional. Proibido "estamos à disposição", "somos referência", promessas de resultado, "garantimos" e tom motivacional. Todo conteúdo se conecta ao Special Report e conduz, de forma consultiva, à necessidade de preparar a equipe comercial (venda consultiva, gestão ativa de carteira, principalidade, abordagem, levantamento de necessidades, recomendação, negociação, fechamento, relacionamento sustentável). Cada peça tem função clara na campanha e um próximo passo concreto. Antes de finalizar, releia e reescreva qualquer trecho vago, óbvio, promocional ou sem função.';
 function download(name, text, type) {
   const blob = new Blob([text], { type: type || 'text/plain' });
   const a = document.createElement('a');
@@ -726,33 +763,70 @@ ${formHtml}
 
 // ---------------- Régua ----------------
 function Regua({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
+  const [editing, setEditing] = useState({});
   const val = pieces.regua || '';
-  const prompt = `${ctx()}\n\nEscreva uma RÉGUA DE RELACIONAMENTO de 5 e-mails, consultiva e não agressiva, para nutrir quem baixou o material. Pausa mental: cada e-mail deve fazer sentido isolado. Use exatamente estes marcadores:\n=== E-MAIL 1 (imediato) ===\n=== E-MAIL 2 (D+2) ===\n=== E-MAIL 3 (D+5) ===\n=== E-MAIL 4 (D+8) ===\n=== E-MAIL 5 (D+12) ===\nEm cada um escreva o ASSUNTO na primeira linha (prefixo "Assunto: ") e o corpo em seguida. Use {nome} e {empresa} como variáveis.`;
+  const aprov = Array.isArray(pieces.regua_aprov) ? pieces.regua_aprov : [];
   const secs = parseSections(val);
+  const serialize = list => list.map(s => `=== ${s.label} ===\n${s.body}`).join('\n\n');
+  const CAMPOS = 'Objetivo:\nAssunto:\nPré-header:\nCorpo do e-mail:\nCTA principal:\nCTA secundário:\nCondição de pausa:\nTarefa comercial sugerida:\nObservação interna:';
+  const prompt = `${ctx()}\n\n${ACIONAVEL}\n\nEscreva a RÉGUA DE E-MAILS (5 e-mails) para quem baixou o Special Report. A régua conduz o lead a: consumir o material, reconhecer os desafios na própria cooperativa, perceber que exigem método e desenvolvimento comercial, conhecer o Power Cooperativismo e pedir uma conversa executiva. Consultiva, executiva e humana — jamais termine com "estamos à disposição".\nUse EXATAMENTE estes marcadores e, dentro de cada um, EXATAMENTE estes rótulos (um por linha):\n=== E-MAIL 1 — Entrega do Special Report (envio: imediato) ===\n=== E-MAIL 2 — Tensão central (envio: D+2) ===\n=== E-MAIL 3 — Execução comercial (envio: D+5) ===\n=== E-MAIL 4 — Power Cooperativismo (envio: D+8) ===\n=== E-MAIL 5 — Convite para conversa (envio: D+12) ===\nCampos de cada e-mail:\n${CAMPOS}\n\nIntenção — E-MAIL 1: entrega o material, aponta que ele serve para discutir prioridade comercial e termina com uma pergunta concreta (ex.: "dos 10 desafios, qual mais aparece na sua realidade?"); não vende. E-MAIL 2: aprofunda a tensão de principalidade — presença, capilaridade e base grande não garantem principalidade. E-MAIL 3: mostra que muitos desafios são comerciais (gestão ativa de carteira, gerente consultivo, rotina, abordagem, recomendação); começa a conectar com desenvolvimento de equipe, sem vender. E-MAIL 4: apresenta o Power Cooperativismo como caminho prático, citando temas como ${POWER_TEMAS}. E-MAIL 5: convite leve para uma conversa executiva de 30 minutos, sem pressão. Use {nome} e {empresa} como variáveis. Corpo de cada e-mail com no máximo 5 parágrafos curtos.`;
+
+  function regenOne(i) {
+    const sec = secs[i];
+    const p = `${ctx()}\n\n${ACIONAVEL}\n\nReescreva SOMENTE o conteúdo deste e-mail da régua: "${sec.label}". Mantenha EXATAMENTE os mesmos rótulos, um por linha:\n${CAMPOS}\nNão inclua o marcador ===. Tom consultivo e humano, próximo passo claro, conexão com o Power Cooperativismo quando fizer sentido. Use {nome} e {empresa}.`;
+    gen('regua_' + i, p, async t => {
+      const body = t.replace(/^\s*===.*$/gm, '').trim();
+      setPieces(pp => ({ ...pp, regua: serialize(secs.map((x, j) => j === i ? { ...x, body } : x)) }));
+    });
+  }
+  function editBody(i, text) {
+    setPieces(pp => ({ ...pp, regua: serialize(secs.map((x, j) => j === i ? { ...x, body: text } : x)) }));
+  }
+  function toggleAprov(label) {
+    setPieces(pp => ({ ...pp, regua_aprov: aprov.includes(label) ? aprov.filter(l => l !== label) : [...aprov, label] }));
+  }
+  async function saveAll() { await savePiece('regua', val); if (aprov.length || pieces.regua_aprov) await savePiece('regua_aprov', aprov); }
+
   return <div>
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <div><Kicker>Etapa 5 · Nutrição</Kicker><H1>Régua de e-mails</H1>
-        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 600 }}>5 e-mails para configurar manualmente no Bitrix. Consultivos, com pausa se o lead responder.</p></div>
-      <Btn onClick={() => gen('regua', prompt, async t => setPieces(p => ({ ...p, regua: t })))} disabled={loading === 'regua'}>{val ? '↻ Regenerar' : 'Gerar régua'}</Btn>
+        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 640 }}>5 e-mails consultivos para configurar no Bitrix. Cada um conduz o lead — do download à conversa executiva — com objetivo, prazo, CTAs, pausa e tarefa comercial. Edite, regenere ou aprove cada e-mail.</p></div>
+      <Btn onClick={() => gen('regua', prompt, async t => setPieces(p => ({ ...p, regua: t, regua_aprov: [] })))} disabled={loading === 'regua'}>{val ? '↻ Regenerar tudo' : 'Gerar régua'}</Btn>
     </div>
     <div style={{ marginTop: 18 }}>
-      {loading === 'regua' ? <Card><Spinner /></Card>
-        : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {secs.map((s, i) => <Card key={i}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: C.gold }}>{s.label}</div>
-              <Btn kind="soft" onClick={() => copy(s.body)}>Copiar</Btn>
-            </div>
-            <div style={{ fontSize: 13, color: '#37474d', lineHeight: 1.65, whiteSpace: 'pre-line' }}>{s.body}</div>
-          </Card>)}
+      {loading === 'regua' ? <Card><Spinner label="Escrevendo os 5 e-mails…" /></Card>
+        : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {secs.map((s, i) => {
+            const ap = aprov.includes(s.label);
+            const busy = loading === 'regua_' + i;
+            const ed = editing[i];
+            return <Card key={i} style={{ borderLeft: '4px solid ' + (ap ? C.green : C.line) }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{s.label}</div>
+                  {ap && <span style={{ fontSize: 10.5, fontWeight: 700, color: C.green, background: C.greenBg, borderRadius: 999, padding: '3px 9px' }}>✓ Aprovado</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <Btn kind="soft" onClick={() => regenOne(i)} disabled={busy}>{busy ? '…' : '↻ Regenerar'}</Btn>
+                  <Btn kind="soft" onClick={() => copy(s.body)}>Copiar</Btn>
+                  <Btn kind="soft" onClick={() => setEditing(e => ({ ...e, [i]: !e[i] }))}>{ed ? 'Ver' : 'Editar'}</Btn>
+                  <Btn kind="soft" onClick={() => toggleAprov(s.label)} style={{ color: ap ? C.mut : C.green }}>{ap ? 'Desfazer' : 'Aprovar'}</Btn>
+                </div>
+              </div>
+              {busy ? <Spinner label="Reescrevendo este e-mail…" />
+                : ed ? <textarea value={s.body} onChange={e => editBody(i, e.target.value)} rows={16}
+                    style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 10, padding: '12px 14px', fontSize: 13, lineHeight: 1.6, background: '#FBFAF6', resize: 'vertical', fontFamily: 'inherit' }} />
+                  : <Fields body={s.body} />}
+            </Card>;
+          })}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Btn kind="ghost" onClick={() => copy(val)}>Copiar tudo</Btn>
-            <Btn onClick={() => savePiece('regua', val)}>Salvar</Btn>
+            <Btn onClick={saveAll}>Salvar régua</Btn>
           </div>
         </div>
           : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
             <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600 }}>Nenhuma régua gerada</div>
-            <p style={{ fontSize: 13, color: C.mut, maxWidth: 500, margin: '8px auto 0' }}>Clique em “Gerar régua”. A IA escreve os 5 e-mails no tom consultivo da VendaMais.</p>
+            <p style={{ fontSize: 13, color: C.mut, maxWidth: 520, margin: '8px auto 0' }}>Clique em “Gerar régua”. A IA escreve os 5 e-mails consultivos — do download à conversa executiva — cada um com objetivo, assunto, pré-header, corpo, CTAs, condição de pausa e tarefa comercial.</p>
           </Card>}
     </div>
   </div>;
@@ -762,40 +836,64 @@ function Regua({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
 function Conteudo({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const [tab, setTab] = useState('posts');
   const defs = {
-    posts: { title: 'Posts orgânicos', prompt: `${ctx()}\n\nEscreva 4 POSTS para LinkedIn no tom sênior da VendaMais. Use marcadores:\n=== POST — INSTITUCIONAL ===\n=== POST — AUTOR SÊNIOR (pessoal) ===\n=== POST — DADO/PROVOCAÇÃO ===\n=== POST — REATIVAÇÃO (D+10) ===\nCada post com 3 a 5 parágrafos curtos, sem hashtags excessivas, sem emojis.` },
-    ads: { title: 'Copies de anúncios', prompt: `${ctx()}\n\nEscreva copies de anúncio para LinkedIn Ads. Use marcadores:\n=== IMAGEM ÚNICA (tráfego p/ LP) ===\n=== DOCUMENT AD ===\n=== LEAD GEN FORM ===\n=== RETARGETING ===\nCada um com "Headline:", "Texto:" e "CTA:". Inclua uma variação B curta quando fizer sentido.` },
-    carrossel: { title: 'Roteiro do carrossel', prompt: `${ctx()}\n\nEscreva o ROTEIRO de um carrossel de 8 slides para LinkedIn (a agência fará o layout). Use marcadores === SLIDE 1 === ... === SLIDE 8 ===. Em cada slide: no máximo 2 linhas de texto + uma linha "Visual:" com sugestão. Slide 1 = gancho, slide 8 = CTA.` }
+    posts: {
+      title: 'Posts orgânicos',
+      prompt: `${ctx()}\n\n${ACIONAVEL}\n\nGere 4 POSTS ORGÂNICOS para LinkedIn. Use EXATAMENTE estes marcadores:\n=== POST 1 — Lançamento do Special Report ===\n=== POST 2 — Dado forte do setor ===\n=== POST 3 — Provocação executiva ===\n=== POST 4 — Conexão com treinamento ===\nEm CADA post use EXATAMENTE estes rótulos, um por linha:\nObjetivo:\nPúblico:\nGancho inicial:\nCopy completa:\nCTA:\nSugestão de imagem:\nFormato recomendado:\nObservação para agência:\nVersão curta:\nVersão alternativa (mais executiva):\nPOST 2 deve usar um dado real do relatório. POST 3 deve provocar diretores/superintendentes (ex.: "sua cooperativa cresce em base ou em principalidade?"). POST 4 conecta os desafios à necessidade de desenvolver a equipe comercial.`
+    },
+    briefing: {
+      title: 'Briefing para agência',
+      prompt: `${ctx()}\n\n${ACIONAVEL}\n\nTransforme a campanha em BRIEFINGS PARA A AGÊNCIA (4 peças). Marcadores:\n=== PEÇA 1 — Post de lançamento (estático) ===\n=== PEÇA 2 — Card de dado (estático) ===\n=== PEÇA 3 — Carrossel (LinkedIn) ===\n=== PEÇA 4 — Anúncio para a landing page ===\nEm CADA peça use EXATAMENTE estes rótulos, um por linha:\nFormato:\nCanal:\nObjetivo da peça:\nPúblico:\nMensagem central:\nTexto principal da arte:\nTexto secundário:\nCTA:\nSugestão visual:\nElementos obrigatórios:\nElementos que evitar:\nObservações de tom:\nDimensão sugerida:\nStatus:\nEm "Elementos que evitar" inclua: tom motivacional, excesso de texto, aparência genérica de banco e de e-book promocional. Status inicial: rascunho.`
+    },
+    carrossel: {
+      title: 'Roteiro de carrossel',
+      prompt: `${ctx()}\n\n${ACIONAVEL}\n\nGere o ROTEIRO DE CARROSSEL (8 slides) para a agência montar. Marcadores === SLIDE 1 — Capa === até === SLIDE 8 — CTA ===. Em CADA slide use EXATAMENTE estes rótulos, um por linha:\nObjetivo:\nTítulo:\nTexto principal:\nTexto de apoio:\nSugestão visual:\nObservação para o designer:\nEstrutura obrigatória: 1 Capa (título forte e específico), 2 Tensão (o problema principal), 3 Dado (um número do relatório), 4 Desafio comercial (não é só tecnologia/regulação), 5 Execução (equipe, carteira, abordagem, liderança), 6 Risco (o que acontece se ignorar), 7 Caminho (treinamento é processo, não evento), 8 CTA (baixar o Special Report / conhecer o Power Cooperativismo).`
+    },
+    ads: {
+      title: 'Copies de anúncios',
+      prompt: `${ctx()}\n\n${ACIONAVEL}\n\nGere COPIES DE ANÚNCIOS (5 variações). Marcadores:\n=== ANÚNCIO 1 — Download do Special Report ===\n=== ANÚNCIO 2 — Dado forte ===\n=== ANÚNCIO 3 — Retargeting ===\n=== ANÚNCIO 4 — Conhecer o Power Cooperativismo ===\n=== ANÚNCIO 5 — Conversa executiva ===\nEm CADA anúncio use EXATAMENTE estes rótulos, um por linha:\nObjetivo:\nPúblico:\nFormato recomendado:\nTítulo:\nTexto principal:\nDescrição:\nCTA:\nObservação de segmentação:\nUTM sugerida:`
+    },
+    pessoais: {
+      title: 'Posts pessoais',
+      prompt: `${ctx()}\n\n${ACIONAVEL}\n\nGere 2 POSTS PESSOAIS (autorais, primeira pessoa, para o perfil de um líder da VendaMais). Marcadores:\n=== POST PESSOAL — RAUL (reflexivo e provocativo) ===\n=== POST PESSOAL — FABIANO (execução comercial: treinamento, carteira, relacionamento) ===\nEm CADA um use EXATAMENTE estes rótulos, um por linha:\nObjetivo:\nGancho inicial:\nCopy completa:\nCTA:\nObservação:\nTom pessoal, sem parecer institucional; história ou observação real de mercado que conecte aos desafios do relatório.`
+    },
+    checklist: {
+      title: 'Checklist de publicação',
+      prompt: `${ctx()}\n\nGere um CHECKLIST DE PUBLICAÇÃO prático e específico desta campanha. Marcadores por frente:\n=== LINKEDIN (ORGÂNICO) ===\n=== LINKEDIN ADS ===\n=== LANDING PAGE / WORDPRESS ===\n=== RÉGUA / BITRIX ===\n=== MENSURAÇÃO ===\nEm cada frente, itens em lista começando com "- " — ações objetivas e verificáveis (o que publicar, conferir, configurar e medir).`
+    }
   };
+  const order = ['posts', 'briefing', 'carrossel', 'ads', 'pessoais', 'checklist'];
   const key = 'cont_' + tab;
   const val = pieces[key] || '';
   const d = defs[tab];
   const secs = parseSections(val);
   return <div>
     <Kicker>Etapa 6 · Conteúdo</Kicker><H1>Content Studio</H1>
-    <p style={{ margin: '0 0 16px', color: C.mut, fontSize: 14, maxWidth: 600 }}>Posts, anúncios e roteiro do carrossel — gerados pela IA no tom da campanha.</p>
-    <div style={{ display: 'inline-flex', background: '#EAE7DC', borderRadius: 10, padding: 4, gap: 2, marginBottom: 18 }}>
-      {Object.entries(defs).map(([k, v]) => <button key={k} onClick={() => setTab(k)}
-        style={{ background: tab === k ? C.deep : 'transparent', color: tab === k ? '#fff' : '#4C5B60', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{v.title}</button>)}
+    <p style={{ margin: '0 0 16px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Copies prontas para publicar e briefings prontos para a agência — cada peça com função clara na campanha. Cada aba gera e salva de forma independente.</p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', background: '#EAE7DC', borderRadius: 10, padding: 4, gap: 2, marginBottom: 18 }}>
+      {order.map(k => <button key={k} onClick={() => setTab(k)}
+        style={{ background: tab === k ? C.deep : 'transparent', color: tab === k ? '#fff' : '#4C5B60', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{defs[k].title}</button>)}
     </div>
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div style={{ fontSize: 12.5, color: C.mut }}>{tab === 'briefing' ? 'Formato pronto para enviar à agência como briefing de criação.' : tab === 'checklist' ? 'Passo a passo para colocar a campanha no ar.' : 'Gerado no tom consultivo da campanha, conectado ao Special Report.'}</div>
       <Btn onClick={() => gen(key, d.prompt, async t => setPieces(p => ({ ...p, [key]: t })))} disabled={loading === key}>{val ? '↻ Regenerar' : 'Gerar ' + d.title.toLowerCase()}</Btn>
     </div>
-    {loading === key ? <Card><Spinner /></Card>
+    {loading === key ? <Card><Spinner label={'Gerando ' + d.title.toLowerCase() + '…'} /></Card>
       : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {secs.map((s, i) => <Card key={i}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: C.gold }}>{s.label}</div>
+        {secs.map((s, i) => <Card key={i} style={{ borderLeft: '4px solid ' + C.gold2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{s.label}</div>
             <Btn kind="soft" onClick={() => copy(s.body)}>Copiar</Btn>
           </div>
-          <div style={{ fontSize: 13, color: '#37474d', lineHeight: 1.65, whiteSpace: 'pre-line' }}>{s.body}</div>
+          <Body body={s.body} />
         </Card>)}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <Btn kind="ghost" onClick={() => copy(val)}>Copiar tudo</Btn>
           <Btn onClick={() => savePiece(key, val)}>Salvar</Btn>
         </div>
       </div>
         : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
-          <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600 }}>Nada gerado ainda</div>
-          <p style={{ fontSize: 13, color: C.mut, maxWidth: 500, margin: '8px auto 0' }}>Clique em “Gerar {d.title.toLowerCase()}”.</p>
+          <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600 }}>Nada gerado nesta aba</div>
+          <p style={{ fontSize: 13, color: C.mut, maxWidth: 520, margin: '8px auto 0' }}>Clique em “Gerar {d.title.toLowerCase()}”. O conteúdo sai estruturado, com função clara na campanha.</p>
         </Card>}
   </div>;
 }
@@ -807,7 +905,7 @@ function Exportar({ cur, materials, pieces, flash }) {
     download((cur.nome || 'campanha').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.json', JSON.stringify(pkg, null, 2), 'application/json');
     flash('Pacote JSON da campanha baixado.');
   }
-  const items = [['Análise estratégica', pieces.analise], ['Landing page', pieces.lp], ['Régua de e-mails', pieces.regua], ['Posts', pieces.cont_posts], ['Anúncios', pieces.cont_ads], ['Carrossel', pieces.cont_carrossel]];
+  const items = [['Análise estratégica', pieces.analise], ['Landing page', pieces.lp], ['Régua de e-mails', pieces.regua], ['Posts orgânicos', pieces.cont_posts], ['Briefing p/ agência', pieces.cont_briefing], ['Roteiro de carrossel', pieces.cont_carrossel], ['Copies de anúncios', pieces.cont_ads], ['Posts pessoais', pieces.cont_pessoais], ['Checklist de publicação', pieces.cont_checklist]];
   return <div>
     <Kicker>Etapa 7 · Exportação</Kicker><H1>Exportar campanha</H1>
     <p style={{ margin: '0 0 18px', color: C.mut, fontSize: 14, maxWidth: 600 }}>Baixe tudo o que foi gerado. A landing page tem export próprio em HTML na etapa Landing page.</p>
