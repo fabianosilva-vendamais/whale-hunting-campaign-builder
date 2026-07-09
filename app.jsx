@@ -519,16 +519,18 @@ function Strategy({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
 // ---------------- Landing Page ----------------
 function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const val = pieces.lp || '';
-  const prompt = `${ctx()}\n\nEscreva o CONTEÚDO COMPLETO da landing page para captura via download do material. Use exatamente estes marcadores de bloco, e escreva o texto final de cada um (sem instruções):\n=== HERO ===\n(título forte + subtítulo + frase do CTA)\n=== CONTEXTO ===\n=== DADOS ===\n(apenas dados presentes nos materiais)\n=== DESAFIOS ===\n=== PARA QUEM É ===\n=== O QUE VOCÊ ENCONTRA ===\n=== SOBRE A VENDAMAIS ===\n=== CONVERSA EXECUTIVA ===\n=== FORMULÁRIO ===\n(campos recomendados)`;
+  const prompt = `${ctx()}\n\nEscreva o CONTEÚDO COMPLETO da landing page para captura via download do material. Use exatamente estes marcadores de bloco, e escreva o texto final de cada um (sem instruções):\n=== HERO ===\n(título forte + subtítulo + frase do CTA)\n=== CONTEXTO ===\n=== DADOS ===\n(3 a 5 dados presentes nos materiais, cada linha começando pelo número)\n=== FRASE DE IMPACTO ===\n(uma única frase forte e memorável que resuma a tese da campanha; sem aspas, sem atribuição)\n=== DESAFIOS ===\n=== PARA QUEM É ===\n=== O QUE VOCÊ ENCONTRA ===\n=== SOBRE A VENDAMAIS ===\n=== CONVERSA EXECUTIVA ===\n=== FORMULÁRIO ===\n(campos recomendados)`;
   function buildHtml() {
     const secs = parseSections(val);
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const md = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    const clean = s => String(s || '').replace(/^\s*[-•]\s*/, '').replace(/^\s*\*\s+/, '').replace(/^\s*\d+[.)]\s*/, '').trim();
+    const clean = s => String(s || '').replace(/^\s*[-•]\s*/, '').replace(/^\s*\*\s+/, '').replace(/^\s*\d+[.)]\s+/, '').trim();
     const rows = b => String(b || '').split('\n').map(x => x.trim()).filter(Boolean);
     const bullets = b => rows(b).filter(l => /^(?:[-•]\s|\*\s|\d+[.)])/.test(l)).map(clean);
     const paras = b => String(b || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${md(p.replace(/\n/g, ' '))}</p>`).join('');
     const find = re => secs.find(s => re.test(s.label));
+    const checkSvg = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    const ig = (materials || []).find(m => m.tipo === 'infografico' && m.kind === 'image' && m.url);
     const heroSec = find(/hero/i);
     const heroLines = rows(heroSec ? heroSec.body : '');
     const heroTitle = clean(heroLines[0] || cur.nome || 'Special Report');
@@ -550,6 +552,9 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
           return num ? `<div class="stat"><div class="statn">${esc(num)}</div><div class="statc">${md(cap || t)}</div></div>` : `<div class="stat"><div class="statc">${md(t)}</div></div>`;
         }).join('');
         blocks.push(wrap(L, `<h2>Os números do setor</h2><div class="stats">${items}</div>`, 'soft'));
+      } else if (/frase|impacto|destaque/i.test(L)) {
+        const q = clean(rows(b).join(' '));
+        if (q) blocks.push(`  <section class="pull"><div class="wrap"><span class="qmark">“</span><p>${md(q)}</p></div></section>`);
       } else if (/desafi/i.test(L)) {
         const items = bullets(b).map((t, i) => `<div class="chal"><span class="cnum">${String(i + 1).padStart(2, '0')}</span><p>${md(t)}</p></div>`).join('');
         blocks.push(wrap(L, `<h2>Os desafios que abordamos</h2><div class="chals">${items}</div>`));
@@ -562,7 +567,7 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
       } else if (/o que voc|encontra|conteúdo|conteudo/i.test(L)) {
         const bl = bullets(b);
         const intro = rows(b).find(l => !/^(?:[-•]\s|\*\s|\d+[.)])/.test(l));
-        const items = (bl.length ? bl : rows(b).map(clean)).map(t => `<li><span class="ck">✓</span><span>${md(t)}</span></li>`).join('');
+        const items = (bl.length ? bl : rows(b).map(clean)).map(t => `<li><span class="ck">${checkSvg}</span><span>${md(t)}</span></li>`).join('');
         blocks.push(wrap(L, `<h2>O que você vai encontrar</h2>${intro ? `<p class="lead">${md(clean(intro))}</p>` : ''}<ul class="checks">${items}</ul>`));
       } else if (/sobre/i.test(L)) {
         blocks.push(wrap(L, `<h2>Sobre a VendaMais</h2>${paras(b)}`, 'soft'));
@@ -590,17 +595,28 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
     }).join('');
     const formHtml = `  <section class="band" id="form"><div class="wrap"><div class="formcard"><div class="formcopy"><div class="eyebrow gold">Download gratuito</div><h2>${md(clean(formTitle) || 'Receba o Special Report')}</h2><p>Preencha os campos para receber o material no seu e-mail.</p></div><form onsubmit="event.preventDefault();this.querySelector('.cta').textContent='Enviado ✓';">${inputs}<button type="submit" class="cta full">${esc(cta)}</button><p class="priv">Ao enviar, você concorda com nossa Política de Privacidade. Seus dados não serão compartilhados.</p></form></div></div></section>`;
 
+    const figHtml = ig ? `  <section class="band figband"><div class="wrap"><div class="eyebrow">Do relatório</div><h2>Uma amostra do material</h2><figure class="figure"><img src="${esc(ig.url)}" alt="Infográfico do Special Report" loading="lazy"><figcaption>Infográfico exclusivo incluído no Special Report.</figcaption></figure></div></section>` : '';
+
     const css = `*{box-sizing:border-box}body{margin:0;font-family:'Karla',-apple-system,system-ui,sans-serif;color:#1D2C31;background:#F7F5EF;line-height:1.6;-webkit-font-smoothing:antialiased}
 h1,h2{font-family:'Playfair Display',Georgia,serif;font-weight:700;letter-spacing:-.01em;margin:0}
 .wrap{max-width:1000px;margin:0 auto;padding:0 28px}
 .eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:14px}
 .eyebrow.gold{color:#C9A45B}
-.hero{background:linear-gradient(155deg,#142B33 0%,#1E3E49 100%);color:#F4F2EC;padding:86px 0 92px;position:relative;overflow:hidden}
-.hero:after{content:'';position:absolute;right:-140px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(201,164,91,.22),transparent 70%)}
-.hero .brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:30px}
+.hero{background:linear-gradient(155deg,#122831 0%,#1E3E49 100%);color:#F4F2EC;padding:72px 0 84px;position:relative;overflow:hidden}
+.hero:before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:44px 44px;opacity:.6}
+.hero:after{content:'';position:absolute;right:-160px;top:-120px;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(201,164,91,.25),transparent 70%)}
+.herogrid{display:grid;grid-template-columns:1.12fr .88fr;gap:52px;align-items:center;position:relative;z-index:1}
+.hero .brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:26px}
 .hero .eyebrow{color:#C9A45B}
-.hero h1{font-size:46px;line-height:1.12;max-width:760px;color:#fff}
-.hero .sub{font-size:19px;color:#CBD8DC;max-width:620px;margin:22px 0 0;line-height:1.55}
+.hero h1{font-size:44px;line-height:1.12;color:#fff}
+.hero .sub{font-size:18px;color:#CBD8DC;margin:20px 0 0;line-height:1.55}
+.hcover{display:flex;justify-content:center}
+.cover{position:relative;width:270px;min-height:356px;background:linear-gradient(180deg,#FBFAF6,#ECE7DA);border-radius:10px;box-shadow:0 34px 70px rgba(0,0,0,.45);padding:32px 28px;border-left:9px solid #C9A45B;transform:rotate(-2.2deg)}
+.cover-tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C7B37;font-weight:700}
+.cover-title{font-family:'Playfair Display',serif;font-size:24px;line-height:1.22;font-weight:700;margin-top:14px;color:#142B33}
+.cover-foot{position:absolute;left:28px;right:28px;bottom:26px;display:flex;justify-content:space-between;font-size:12px;color:#5C6A70;border-top:1px solid #E0DAC9;padding-top:12px}
+.cover-foot span:first-child{font-family:'Playfair Display',serif;font-weight:700;color:#142B33}
+.cover-badge{position:absolute;top:-13px;right:-13px;background:#C9A45B;color:#142B33;font-weight:800;font-size:12px;padding:7px 11px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.3)}
 .cta{display:inline-block;background:#C9A45B;color:#142B33;font-weight:700;font-family:'Karla',sans-serif;padding:15px 30px;border-radius:9px;margin-top:34px;text-decoration:none;font-size:15px;border:none;cursor:pointer;transition:background .15s,transform .15s}
 .cta:hover{background:#d8b775;transform:translateY(-1px)}
 .cta.full{width:100%;text-align:center;margin-top:8px;font-size:16px;padding:16px}
@@ -610,7 +626,7 @@ h2{font-size:31px;line-height:1.2;margin-bottom:22px;max-width:640px}
 .band p{font-size:16px;color:#3B4A50;margin:0 0 14px;max-width:720px}
 .lead{font-size:19px !important;color:#2A3A40 !important;line-height:1.6;max-width:760px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;margin-top:6px}
-.stat{background:#fff;border:1px solid #E7E2D5;border-radius:14px;padding:26px 24px}
+.stat{background:#fff;border:1px solid #E7E2D5;border-top:3px solid #C9A45B;border-radius:14px;padding:24px 24px}
 .statn{font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:#1E3E49;line-height:1}
 .statc{font-size:14px;color:#5C6A70;margin-top:10px;line-height:1.5}
 .chals{display:grid;gap:14px;margin-top:6px}
@@ -622,6 +638,16 @@ h2{font-size:31px;line-height:1.2;margin-bottom:22px;max-width:640px}
 .checks{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:12px}
 .checks li{display:flex;gap:13px;align-items:flex-start;font-size:16px;color:#2F3E44}
 .ck{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#E7EEEC;color:#1E3E49;font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px}
+.band h2::after{content:'';display:block;width:46px;height:3px;background:#C9A45B;border-radius:2px;margin-top:16px}
+.ctaband h2::after,.formcopy h2::after,.figband h2::after{margin-left:auto;margin-right:auto}
+.pull{background:#122831;color:#fff;text-align:center;padding:60px 0;border:none}
+.pull .qmark{font-family:'Playfair Display',serif;font-size:64px;color:#C9A45B;line-height:0;display:block;height:24px}
+.pull p{font-family:'Playfair Display',serif;font-size:29px;line-height:1.36;max-width:800px;margin:0 auto;color:#fff;font-weight:600}
+.figband{text-align:center}
+.figband h2{margin-left:auto;margin-right:auto}
+.figure{margin:26px auto 0;max-width:760px;border-radius:16px;overflow:hidden;border:1px solid #E7E2D5;background:#fff;box-shadow:0 24px 60px rgba(20,43,51,.1)}
+.figure img{display:block;width:100%;height:auto}
+.figure figcaption{padding:13px 20px;font-size:13px;color:#5C6A70;border-top:1px solid #E7E2D5}
 .ctaband{background:linear-gradient(155deg,#142B33,#1E3E49);color:#fff;text-align:center;border:none}
 .caband .eyebrow,.cataband .eyebrow{color:#C9A45B}
 .ctaband h2{color:#fff;margin:0 auto 16px}
@@ -639,7 +665,8 @@ h2{font-size:31px;line-height:1.2;margin-bottom:22px;max-width:640px}
 footer{background:#142B33;color:#8AA2A9;padding:34px 0;font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 footer .fb{font-family:'Playfair Display',serif;color:#fff;font-size:16px;font-weight:700}
-@media(max-width:640px){.hero{padding:60px 0}.hero h1{font-size:33px}h2{font-size:25px}.band{padding:46px 0}.formcard{padding:28px}}`;
+@media(max-width:820px){.herogrid{grid-template-columns:1fr;gap:38px}.cover{transform:none}}
+@media(max-width:640px){.hero{padding:56px 0 64px}.hero h1{font-size:33px}h2{font-size:25px}.band{padding:46px 0}.formcard{padding:28px}.pull p{font-size:23px}}`;
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -648,8 +675,9 @@ footer .fb{font-family:'Playfair Display',serif;color:#fff;font-size:16px;font-w
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>${css}</style></head>
 <body>
-  <header class="hero"><div class="wrap"><div class="brand">VendaMais</div><div class="eyebrow">${esc(periodo)}</div><h1>${md(heroTitle)}</h1>${heroSub ? `<p class="sub">${md(heroSub)}</p>` : ''}<a class="cta" href="#form">${esc(cta)} →</a></div></header>
+  <header class="hero"><div class="wrap herogrid"><div class="htext"><div class="brand">VendaMais</div><div class="eyebrow">${esc(periodo)}</div><h1>${md(heroTitle)}</h1>${heroSub ? `<p class="sub">${md(heroSub)}</p>` : ''}<a class="cta" href="#form">${esc(cta)} →</a></div><div class="hcover"><div class="cover"><span class="cover-badge">PDF</span><span class="cover-tag">Special Report</span><div class="cover-title">${md(heroTitle)}</div><div class="cover-foot"><span>VendaMais</span><span>${esc(periodo)}</span></div></div></div></div></header>
   <main>
+${figHtml}
 ${blocks.join('\n')}
 ${formHtml}
   </main>
