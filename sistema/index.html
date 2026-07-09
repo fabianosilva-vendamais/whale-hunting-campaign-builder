@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whale Hunting Campaign Builder — VendaMais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin:0; padding:0; background:#F4F2EC; font-family:'Instrument Sans',sans-serif; color:#1D2C31; }
+    * { box-sizing:border-box; }
+    #boot { display:flex; align-items:center; justify-content:center; height:100vh; color:#66757B; font-size:14px; }
+    textarea, input, select { font-family:'Instrument Sans',sans-serif; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"><div id="boot">Carregando o sistema…</div></div>
+  <script>
+    (function () {
+      function boot() {
+        fetch('app.jsx').then(function (r) { return r.text(); }).then(function (src) {
+          var out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+          (0, eval)(out);
+        }).catch(function (e) {
+          document.getElementById('root').innerHTML =
+            '<div style="padding:40px;font-family:sans-serif;color:#A94A38;max-width:600px;margin:0 auto">'
+            + '<b>Não foi possível carregar o sistema.</b><br><br>' + (e && e.message ? e.message : e) + '</div>';
+        });
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') boot();
+      else window.addEventListener('DOMContentLoaded', boot);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;}
+  doc-page:not(:defined){visibility:hidden}
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" margin="0.85in" hint-size="100%,100%">
+  <div style="font-family:'Instrument Sans',sans-serif;color:#1D2C31;font-size:13px;line-height:1.65">
+
+    <div style="border-bottom:3px solid #142B33;padding-bottom:18px;margin-bottom:26px">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C7B37;font-weight:700">VendaMais · Whale Hunting Campaign Builder</div>
+      <h1 style="font-family:'Source Serif 4',serif;font-size:29px;font-weight:600;margin:8px 0 6px">Colocar o Sistema no Ar</h1>
+      <p style="margin:0;color:#66757B;font-size:13.5px">Guia passo a passo do sistema <strong>funcional</strong> — o que está na pasta <strong>sistema/</strong>. Sem programação: só subir arquivos e preencher 4 variáveis.</p>
+    </div>
+
+    <div style="background:#EDF1F0;border:1px solid #D3E0DE;border-radius:8px;padding:14px 18px;margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;color:#1E4A50;margin-bottom:6px">Como este sistema funciona (importante)</div>
+      <p style="margin:0 0 6px">Ele tem duas partes que se conversam sozinhas: a <strong>tela</strong> (o que você vê) e duas <strong>rotas de servidor</strong> — uma fala com a OpenAI, outra com o Supabase. As suas chaves ficam <strong>só no servidor da Vercel</strong>; nunca aparecem no navegador. Por isso é seguro.</p>
+      <p style="margin:0">Você não precisa entender o código. Precisa: (1) subir os arquivos, (2) colar 4 variáveis na Vercel, (3) rodar o SQL no Supabase. Só isso.</p>
+    </div>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px">Passo 1 · Subir a pasta no GitHub</h2>
+    <ol style="margin:8px 0 20px;padding-left:20px">
+      <li style="margin-bottom:5px">Baixe o projeto (card de download no chat) e localize a pasta <strong>sistema/</strong>. Só o conteúdo dela vai para o ar.</li>
+      <li style="margin-bottom:5px">Em <strong>github.com</strong>, crie um repositório novo: <strong>whale-hunting-sistema</strong> → <strong>Private</strong> → Create.</li>
+      <li style="margin-bottom:5px">Clique em <strong>uploading an existing file</strong> e arraste <strong>o conteúdo</strong> da pasta sistema/ — ou seja, o arquivo <span style="font-family:ui-monospace,monospace;font-size:12px">index.html</span>, o <span style="font-family:ui-monospace,monospace;font-size:12px">app.jsx</span> e a pasta <span style="font-family:ui-monospace,monospace;font-size:12px">api</span> (com generate.js e db.js dentro).</li>
+      <li>Commit changes.</li>
+    </ol>
+    <div style="background:#F4F2EC;border:1px solid #E4E0D3;border-radius:8px;padding:12px 16px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.8;margin:0 0 8px">index.html<br>app.jsx<br>api/generate.js<br>api/db.js</div>
+    <p style="margin:0 0 24px;color:#66757B;font-size:12.5px">Esses 4 arquivos ficam na <strong>raiz</strong> do repositório (não dentro de outra pasta). A estrutura acima é exatamente o que a Vercel espera.</p>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px">Passo 2 · Rodar o SQL no Supabase</h2>
+    <p style="margin:8px 0 8px">No seu projeto Supabase → <strong>SQL Editor → New query</strong> → cole o bloco abaixo → <strong>Run</strong>. Cria as tabelas uma única vez.</p>
+    <div style="background:#142B33;color:#B9CBD0;border-radius:8px;padding:14px 18px;font-family:ui-monospace,monospace;font-size:10.5px;line-height:1.7;margin:0 0 12px;white-space:pre">create table if not exists campanhas (
+  id uuid primary key default gen_random_uuid(),
+  nome text, segmento text, objetivo text, publico_alvo text,
+  cargos text, solucao_principal text, solucoes_secundarias text,
+  cta_principal text, restricoes text, status text default 'rascunho',
+  periodo_inicio date, periodo_fim date,
+  criada_em timestamptz default now());
+
+create table if not exists materiais (
+  id uuid primary key default gen_random_uuid(),
+  campanha_id uuid references campanhas(id),
+  tipo text, texto_extraido text, observacoes text);
+
+create table if not exists pecas (
+  id uuid primary key default gen_random_uuid(),
+  campanha_id uuid references campanhas(id),
+  tipo text, conteudo jsonb, versao int default 1,
+  status text default 'rascunho');</div>
+    <p style="margin:0 0 24px;color:#66757B;font-size:12.5px">Não precisa criar Storage nesta versão — os materiais são colados como texto (mais confiável que ler PDF). Storage pode entrar depois.</p>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px">Passo 3 · Publicar na Vercel</h2>
+    <ol style="margin:8px 0 14px;padding-left:20px">
+      <li style="margin-bottom:5px">Em <strong>vercel.com</strong> → <strong>Add New… → Project</strong> → importe o repositório <strong>whale-hunting-sistema</strong>.</li>
+      <li style="margin-bottom:5px">Framework Preset: <strong>Other</strong>. Não mude mais nada.</li>
+      <li style="margin-bottom:5px">Antes de clicar em Deploy, abra <strong>Environment Variables</strong> e cadastre as 3 abaixo.</li>
+      <li>Clique em <strong>Deploy</strong>. Em ~1 minuto sai a URL.</li>
+    </ol>
+    <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin:0 0 10px">
+      <tr style="background:#F4F2EC">
+        <td style="border:1px solid #E4E0D3;padding:7px 10px;font-weight:700">Variável (nome exato)</td>
+        <td style="border:1px solid #E4E0D3;padding:7px 10px;font-weight:700">O que colar</td>
+      </tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:7px 10px;font-family:ui-monospace,monospace">OPENAI_API_KEY</td><td style="border:1px solid #E4E0D3;padding:7px 10px">Sua chave da OpenAI (sk-…)</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:7px 10px;font-family:ui-monospace,monospace">SUPABASE_URL</td><td style="border:1px solid #E4E0D3;padding:7px 10px">Supabase → Settings → API → Project URL</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:7px 10px;font-family:ui-monospace,monospace">SUPABASE_SERVICE_ROLE_KEY</td><td style="border:1px solid #E4E0D3;padding:7px 10px">Supabase → Settings → API → chave <strong>service_role</strong> (a secreta)</td></tr>
+    </table>
+    <div style="background:#FBF6E9;border:1px solid #EBDFC0;border-radius:8px;padding:12px 16px;margin:0 0 12px;color:#6E5A26"><strong>Atenção aos nomes:</strong> use exatamente <span style="font-family:ui-monospace,monospace;font-size:11.5px">SUPABASE_URL</span> e <span style="font-family:ui-monospace,monospace;font-size:11.5px">SUPABASE_SERVICE_ROLE_KEY</span> — <u>sem</u> o prefixo NEXT_PUBLIC. Se você já tinha criado variáveis com NEXT_PUBLIC, crie estas novas com os nomes certos (pode manter as antigas, não atrapalham).</div>
+    <p style="margin:0 0 24px;color:#66757B;font-size:12.5px">Se você adicionar as variáveis <em>depois</em> do primeiro deploy, vá em <strong>Deployments → ⋯ → Redeploy</strong> para elas passarem a valer.</p>
+
+    <div style="background:#EDF1F0;border:1px solid #D3E0DE;border-radius:8px;padding:12px 16px;margin:0 0 24px;font-size:12.5px;color:#1E4A50"><strong>Sobre acesso:</strong> o sistema abre direto, sem login — como você pediu. A URL não é divulgada, então fica restrita a quem tem o link. Se um dia quiser uma camada de privacidade sem login interno, ative <strong>Vercel → Settings → Deployment Protection → Password Protection</strong> (recurso pago): a própria Vercel pede uma senha antes de abrir o site.</div>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px">Passo 4 · Usar</h2>
+    <ol style="margin:8px 0 20px;padding-left:20px">
+      <li style="margin-bottom:5px">Abra a URL da Vercel — o sistema já entra no painel de campanhas.</li>
+      <li style="margin-bottom:5px"><strong>Nova campanha</strong>: preencha tema, objetivo, cargos, CTA e salve.</li>
+      <li style="margin-bottom:5px"><strong>Materiais</strong>: cole o texto do Special Report (e Radar/contas, se tiver) e salve.</li>
+      <li style="margin-bottom:5px"><strong>Estratégia, Landing page, Régua, Conteúdo</strong>: clique em Gerar — a IA cria o conteúdo real; edite e salve.</li>
+      <li><strong>Landing page → Baixar HTML</strong> gera o arquivo para colar no WordPress. <strong>Exportar</strong> baixa a campanha inteira em JSON.</li>
+    </ol>
+
+    <h2 style="font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 8px;padding-top:10px;border-top:1px solid #E4E0D3">Se algo der errado</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:0 0 16px">
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Erro ao gerar / OpenAI</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Verifique OPENAI_API_KEY e o billing/limite na OpenAI (erro 429 = sem crédito).</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Erro no banco</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Rode o SQL do Passo 2 e confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Página em branco</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Confira se os 4 arquivos estão na raiz do repositório (index.html, app.jsx, api/generate.js, api/db.js).</td></tr>
+    </table>
+
+    <div style="background:#F4F2EC;border:1px solid #E4E0D3;border-radius:8px;padding:14px 18px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">Limites honestos desta versão</div>
+      <p style="margin:0 0 4px">· Os materiais entram como <strong>texto colado</strong> (a leitura automática de PDF fica para depois).</p>
+      <p style="margin:0 0 4px">· A IA é a <strong>OpenAI</strong> (sua chave). O modelo padrão é econômico (gpt-4o-mini); dá para trocar criando a variável <span style="font-family:ui-monospace,monospace;font-size:11.5px">OPENAI_MODEL</span>.</p>
+      <p style="margin:0">· A segurança é por <strong>senha de equipe</strong> — suficiente para dois usuários. Se um dia o time crescer, o próximo passo é ativar o login por e-mail do Supabase (Auth).</p>
+    </div>
+
+    <p style="margin:0;color:#66757B;font-size:12px;border-top:1px solid #E4E0D3;padding-top:12px">Para salvar este guia em PDF: Ctrl+P / Cmd+P → Salvar como PDF.</p>
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

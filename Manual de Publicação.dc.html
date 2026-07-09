@@ -93,6 +93,26 @@ create table resultados (
   campanha_id uuid references campanhas(id),
   semana date, metricas jsonb);</div>
 
+    <div style="background:#EDF1F0;border:1px solid #D3E0DE;border-radius:8px;padding:14px 18px;margin:0 0 16px">
+      <div style="font-size:13px;font-weight:700;color:#1E4A50;margin-bottom:6px">Entendendo os dois conceitos</div>
+      <p style="margin:0 0 6px"><strong>Query</strong> é só um comando enviado ao banco. O bloco de código azul acima <strong>é o query</strong> — você o executa uma única vez: <strong>SQL Editor → New query → cole → Run</strong>. Ele cria as 5 tabelas de uma vez. Não precisa inventar mais nada.</p>
+      <p style="margin:0"><strong>Storage</strong> é o armário de arquivos. O banco (tabelas) guarda os <em>textos</em> — nome da campanha, objetivo, status. O Storage guarda os <em>arquivos</em> — PDFs do Special Report, infográficos, imagens. Nas tabelas fica só o link (<span style="font-family:ui-monospace,monospace;font-size:12px">arquivo_url</span>) que aponta para o arquivo no Storage. Crie um bucket <strong>materiais</strong> marcado como privado.</p>
+    </div>
+
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Plano Supabase — free vs. Pro</h3>
+    <p style="margin:0 0 8px">O free permite 2 projetos por organização e serve para testar. Para produção da VendaMais, o recomendado é o <strong>Pro (US$ 25/mês por organização)</strong>: projetos ilimitados, banco sem pausa automática por inatividade, 8&nbsp;GB de banco e 100&nbsp;GB de storage inclusos, e backups diários. Para assinar: <strong>app.supabase.com → sua organização → Settings → Billing → Upgrade to Pro</strong>. Depois de assinar, o bloqueio de "2 free projects" desaparece e você cria o projeto whale-hunting normalmente.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:0 0 16px">
+      <tr style="background:#F4F2EC">
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Recurso</td>
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Free</td>
+        <td style="border:1px solid #E4E0D3;padding:8px 12px;font-weight:700">Pro (US$ 25/mês)</td>
+      </tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px">Projetos ativos</td><td style="border:1px solid #E4E0D3;padding:8px 12px">2 por organização</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Ilimitados</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px">Pausa por inatividade</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Após 7 dias sem uso</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Nunca</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px">Banco / Storage</td><td style="border:1px solid #E4E0D3;padding:8px 12px">0,5 GB / 1 GB</td><td style="border:1px solid #E4E0D3;padding:8px 12px">8 GB / 100 GB</td></tr>
+      <tr><td style="border:1px solid #E4E0D3;padding:8px 12px">Backups</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Não</td><td style="border:1px solid #E4E0D3;padding:8px 12px">Diários (7 dias)</td></tr>
+    </table>
+
     <h3 style="font-size:14px;font-weight:700;margin:0 0 6px;color:#9C7B37">Passo 2 · OpenAI — onde colocar a chave</h3>
     <ol style="margin:0 0 10px;padding-left:20px">
       <li style="margin-bottom:4px">Acesse <strong>platform.openai.com</strong> → menu <strong>API keys</strong> → <strong>Create new secret key</strong> → copie a chave (<span style="font-family:ui-monospace,monospace;font-size:12px">sk-…</span>). Ela só aparece uma vez.</li>
