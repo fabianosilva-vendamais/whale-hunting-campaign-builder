@@ -519,7 +519,7 @@ function Strategy({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
 // ---------------- Landing Page ----------------
 function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const val = pieces.lp || '';
-  const prompt = `${ctx()}\n\nEscreva o CONTEÚDO COMPLETO da landing page para captura via download do material. Use exatamente estes marcadores de bloco, e escreva o texto final de cada um (sem instruções):\n=== HERO ===\n(título forte + subtítulo + frase do CTA)\n=== CONTEXTO ===\n=== DADOS ===\n(3 a 5 dados presentes nos materiais, cada linha começando pelo número)\n=== FRASE DE IMPACTO ===\n(uma única frase forte e memorável que resuma a tese da campanha; sem aspas, sem atribuição)\n=== DESAFIOS ===\n=== PARA QUEM É ===\n=== O QUE VOCÊ ENCONTRA ===\n=== SOBRE A VENDAMAIS ===\n=== CONVERSA EXECUTIVA ===\n=== FORMULÁRIO ===\n(campos recomendados)`;
+  const prompt = `${ctx()}\n\nEscreva o CONTEÚDO COMPLETO da landing page para captura via download do material. Use exatamente estes marcadores de bloco, e escreva o texto final de cada um (sem instruções):\n=== HERO ===\n(título curto e forte, no máximo 8 palavras; depois o subtítulo em 1 frase; depois a frase do CTA)\n=== CONTEXTO ===\n=== DADOS ===\n(3 a 5 dados presentes nos materiais, cada linha começando pelo número)\n=== FRASE DE IMPACTO ===\n(uma única frase forte e memorável que resuma a tese da campanha; sem aspas, sem atribuição)\n=== DESAFIOS ===\n=== PARA QUEM É ===\n(liste apenas os cargos-alvo, um por linha começando com "- ", sem frase de introdução)\n=== O QUE VOCÊ ENCONTRA ===\n=== SOBRE A VENDAMAIS ===\n=== CONVERSA EXECUTIVA ===\n=== FORMULÁRIO ===\n(liste os campos, um por linha com "- ". Para escolha múltipla use "Campo: ( ) Opção A ( ) Opção B". Para o aceite, uma linha começando com "Aceito")`;
   function buildHtml() {
     const secs = parseSections(val);
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -545,13 +545,13 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
     secs.filter(s => !/hero|formul/i.test(s.label)).forEach(s => {
       const L = s.label, b = s.body;
       if (/dados|números|numeros|estat/i.test(L)) {
-        const items = bullets(b).map(t => {
+        const items = bullets(b).filter(t => /\d/.test(t)).map(t => {
           const m = t.match(/\d[\d.,]*\s*(?:%|milhões|milhão|mil|bilhões|bilhão)?/);
           const num = m ? m[0].trim() : '';
           let cap = num ? t.replace(num, '').replace(/^[\s—–-]+/, '').replace(/^(de|dos|das|no|na|nos|nas)\s+/i, '').trim() : t;
-          return num ? `<div class="stat"><div class="statn">${esc(num)}</div><div class="statc">${md(cap || t)}</div></div>` : `<div class="stat"><div class="statc">${md(t)}</div></div>`;
+          return `<div class="stat"><div class="statn">${esc(num)}</div><div class="statc">${md(cap || t)}</div></div>`;
         }).join('');
-        blocks.push(wrap(L, `<h2>Os números do setor</h2><div class="stats">${items}</div>`, 'soft'));
+        if (items) blocks.push(wrap(L, `<h2>Os números do setor</h2><div class="stats">${items}</div>`, 'soft'));
       } else if (/frase|impacto|destaque/i.test(L)) {
         const q = clean(rows(b).join(' '));
         if (q) blocks.push(`  <section class="pull"><div class="wrap"><span class="qmark">“</span><p>${md(q)}</p></div></section>`);
@@ -559,7 +559,8 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
         const items = bullets(b).map((t, i) => `<div class="chal"><span class="cnum">${String(i + 1).padStart(2, '0')}</span><p>${md(t)}</p></div>`).join('');
         blocks.push(wrap(L, `<h2>Os desafios que abordamos</h2><div class="chals">${items}</div>`));
       } else if (/para quem/i.test(L)) {
-        let chips = String(b).split(/,| e | · /).map(x => clean(x)).filter(x => x.length > 2 && x.length < 46);
+        let chips = bullets(b);
+        if (chips.length < 3) chips = String(b).split(/,| e | · /).map(x => clean(x)).filter(x => x.length > 2 && x.length < 34 && x.split(' ').length <= 4 && !/[.:]$/.test(x) && !/\b(que|buscam|buscando|melhorar|para|com|visando|fortalecer|aprimorar)\b/i.test(x));
         const inner = chips.length >= 3
           ? `<h2>Para quem é este material</h2><div class="chips">${chips.map(c => `<span class="chip">${md(c)}</span>`).join('')}</div>`
           : `<h2>Para quem é este material</h2>${paras(b)}`;
@@ -585,13 +586,21 @@ function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, sav
     let fields = bullets(formSec ? formSec.body : '');
     if (!fields.length) fields = ['Nome completo', 'Cargo', 'Empresa', 'E-mail corporativo', 'Telefone (opcional)'];
     const formTitle = formSec ? (rows(formSec.body).find(l => !/^[-•*]/.test(l) && !/^\d/.test(l) && !/\[/.test(l)) || '') : '';
-    const inputs = fields.filter(f => !/\[|bot(ã|a)o|cta/i.test(f)).map(f => {
-      const label = f.replace(/\s*\(opcional\)/i, '');
+    const inputs = fields.filter(f => !/\[|bot(ã|a)o|^\s*cta/i.test(f)).map(f => {
+      if (/aceito|concordo|autorizo|receber comunica|pol[ií]tica de privac|lgpd|consinto/i.test(f))
+        return `<label class="chk"><input type="checkbox" name="consentimento"><span>${md(clean(f))}</span></label>`;
+      const label = f.split(':')[0].replace(/\s*\(opcional\)/i, '').trim();
       const req = !/opcional/i.test(f);
-      let ctrl;
-      if (/sim\/?n(ã|a)o|agendar|gostaria/i.test(f)) ctrl = `<select name="${esc(label)}"><option value="">Selecione</option><option>Sim</option><option>Não</option></select>`;
-      else { const type = /mail/i.test(f) ? 'email' : /telefone|fone|whats/i.test(f) ? 'tel' : 'text'; ctrl = `<input type="${type}" name="${esc(label)}" ${req ? 'required' : ''} placeholder="${esc(label)}">`; }
-      return `<label class="fld"><span>${esc(label)}${req ? '' : ' <em>(opcional)</em>'}</span>${ctrl}</label>`;
+      const hasOpts = /\(\s*\)/.test(f);
+      const simnao = /\(?\s*sim\s*\/\s*n(ã|a)o\s*\)?/i.test(f) || /gostaria|agendar/i.test(f);
+      if (hasOpts) {
+        const opts = f.slice(f.indexOf(':') + 1).split(/\(\s*\)/).map(x => x.trim().replace(/[.;,]$/, '')).filter(Boolean);
+        return `<label class="fld"><span>${esc(label)}</span><select name="${esc(label)}"><option value="">Selecione</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select></label>`;
+      }
+      if (simnao)
+        return `<label class="fld"><span>${esc(label)}</span><select name="${esc(label)}"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></label>`;
+      const type = /mail/i.test(f) ? 'email' : /telefone|fone|whats/i.test(f) ? 'tel' : 'text';
+      return `<label class="fld"><span>${esc(label)}${req ? '' : ' <em>(opcional)</em>'}</span><input type="${type}" name="${esc(label)}" ${req ? 'required' : ''} placeholder="${esc(label)}"></label>`;
     }).join('');
     const formHtml = `  <section class="band" id="form"><div class="wrap"><div class="formcard"><div class="formcopy"><div class="eyebrow gold">Download gratuito</div><h2>${md(clean(formTitle) || 'Receba o Special Report')}</h2><p>Preencha os campos para receber o material no seu e-mail.</p></div><form onsubmit="event.preventDefault();this.querySelector('.cta').textContent='Enviado ✓';">${inputs}<button type="submit" class="cta full">${esc(cta)}</button><p class="priv">Ao enviar, você concorda com nossa Política de Privacidade. Seus dados não serão compartilhados.</p></form></div></div></section>`;
 
@@ -661,6 +670,8 @@ h2{font-size:31px;line-height:1.2;margin-bottom:22px;max-width:640px}
 .fld em{color:#8B8878;font-weight:400;font-style:normal}
 .fld input,.fld select{width:100%;border:1px solid #D2CBBB;border-radius:9px;padding:12px 14px;font-size:15px;font-family:inherit;background:#FBFAF6;color:#1D2C31}
 .fld input:focus,.fld select:focus{outline:none;border-color:#C9A45B;box-shadow:0 0 0 3px rgba(201,164,91,.18)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#3B4A50;margin:4px 0 15px;font-weight:500;line-height:1.5}
+.chk input{margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#C9A45B}
 .priv{font-size:12px;color:#8B8878;text-align:center;margin-top:14px}
 footer{background:#142B33;color:#8AA2A9;padding:34px 0;font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
