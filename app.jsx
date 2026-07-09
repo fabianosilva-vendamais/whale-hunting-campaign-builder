@@ -520,29 +520,149 @@ function Strategy({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
 function LandingPage({ cur, materials, pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const val = pieces.lp || '';
   const prompt = `${ctx()}\n\nEscreva o CONTEÚDO COMPLETO da landing page para captura via download do material. Use exatamente estes marcadores de bloco, e escreva o texto final de cada um (sem instruções):\n=== HERO ===\n(título forte + subtítulo + frase do CTA)\n=== CONTEXTO ===\n=== DADOS ===\n(apenas dados presentes nos materiais)\n=== DESAFIOS ===\n=== PARA QUEM É ===\n=== O QUE VOCÊ ENCONTRA ===\n=== SOBRE A VENDAMAIS ===\n=== CONVERSA EXECUTIVA ===\n=== FORMULÁRIO ===\n(campos recomendados)`;
-  function exportHtml() {
+  function buildHtml() {
     const secs = parseSections(val);
-    const hero = secs.find(s => /hero/i.test(s.label));
-    const body = secs.filter(s => !/hero/i.test(s.label)).map(s =>
-      `  <section style="padding:34px 40px;border-bottom:1px solid #EFECE4;max-width:820px;margin:0 auto">
-    <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#9C7B37;font-weight:700">${s.label}</div>
-    <div style="font-size:15px;line-height:1.65;color:#37474d;margin-top:8px;white-space:pre-line">${(s.body || '').replace(/</g, '&lt;')}</div>
-  </section>`).join('\n');
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${(cur.nome || 'Landing page').replace(/</g, '')}</title>
-<style>body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#1D2C31;background:#fff}.vm-hero{background:#1E3A43;color:#F4F2EC;padding:72px 40px}.vm-hero h1{font-size:34px;line-height:1.25;max-width:720px;margin:0 auto}.vm-wrap{max-width:820px;margin:0 auto}.vm-cta{display:inline-block;background:#E8593B;color:#fff;font-weight:700;padding:14px 26px;border-radius:8px;margin-top:22px;text-decoration:none}</style></head>
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const md = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const clean = s => String(s || '').replace(/^\s*[-•]\s*/, '').replace(/^\s*\*\s+/, '').replace(/^\s*\d+[.)]\s*/, '').trim();
+    const rows = b => String(b || '').split('\n').map(x => x.trim()).filter(Boolean);
+    const bullets = b => rows(b).filter(l => /^(?:[-•]\s|\*\s|\d+[.)])/.test(l)).map(clean);
+    const paras = b => String(b || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${md(p.replace(/\n/g, ' '))}</p>`).join('');
+    const find = re => secs.find(s => re.test(s.label));
+    const heroSec = find(/hero/i);
+    const heroLines = rows(heroSec ? heroSec.body : '');
+    const heroTitle = clean(heroLines[0] || cur.nome || 'Special Report');
+    const heroSub = heroLines.slice(1).filter(l => !/baixe|baixar|download/i.test(l)).map(clean).join(' ');
+    const cta = (cur.cta_principal || 'Baixar o Special Report').replace(/[<>]/g, '');
+    const periodo = [cur.segmento].filter(Boolean).join('') || 'Special Report';
+
+    // ---- blocos ----
+    const blocks = [];
+    const wrap = (eyebrow, inner, tone) => `  <section class="band${tone ? ' ' + tone : ''}"><div class="wrap">${eyebrow ? `<div class="eyebrow">${esc(eyebrow)}</div>` : ''}${inner}</div></section>`;
+
+    secs.filter(s => !/hero|formul/i.test(s.label)).forEach(s => {
+      const L = s.label, b = s.body;
+      if (/dados|números|numeros|estat/i.test(L)) {
+        const items = bullets(b).map(t => {
+          const m = t.match(/\d[\d.,]*\s*(?:%|milhões|milhão|mil|bilhões|bilhão)?/);
+          const num = m ? m[0].trim() : '';
+          let cap = num ? t.replace(num, '').replace(/^[\s—–-]+/, '').replace(/^(de|dos|das|no|na|nos|nas)\s+/i, '').trim() : t;
+          return num ? `<div class="stat"><div class="statn">${esc(num)}</div><div class="statc">${md(cap || t)}</div></div>` : `<div class="stat"><div class="statc">${md(t)}</div></div>`;
+        }).join('');
+        blocks.push(wrap(L, `<h2>Os números do setor</h2><div class="stats">${items}</div>`, 'soft'));
+      } else if (/desafi/i.test(L)) {
+        const items = bullets(b).map((t, i) => `<div class="chal"><span class="cnum">${String(i + 1).padStart(2, '0')}</span><p>${md(t)}</p></div>`).join('');
+        blocks.push(wrap(L, `<h2>Os desafios que abordamos</h2><div class="chals">${items}</div>`));
+      } else if (/para quem/i.test(L)) {
+        let chips = String(b).split(/,| e | · /).map(x => clean(x)).filter(x => x.length > 2 && x.length < 46);
+        const inner = chips.length >= 3
+          ? `<h2>Para quem é este material</h2><div class="chips">${chips.map(c => `<span class="chip">${md(c)}</span>`).join('')}</div>`
+          : `<h2>Para quem é este material</h2>${paras(b)}`;
+        blocks.push(wrap(L, inner, 'soft'));
+      } else if (/o que voc|encontra|conteúdo|conteudo/i.test(L)) {
+        const bl = bullets(b);
+        const intro = rows(b).find(l => !/^(?:[-•]\s|\*\s|\d+[.)])/.test(l));
+        const items = (bl.length ? bl : rows(b).map(clean)).map(t => `<li><span class="ck">✓</span><span>${md(t)}</span></li>`).join('');
+        blocks.push(wrap(L, `<h2>O que você vai encontrar</h2>${intro ? `<p class="lead">${md(clean(intro))}</p>` : ''}<ul class="checks">${items}</ul>`));
+      } else if (/sobre/i.test(L)) {
+        blocks.push(wrap(L, `<h2>Sobre a VendaMais</h2>${paras(b)}`, 'soft'));
+      } else if (/conversa|reuni|execut/i.test(L)) {
+        blocks.push(`  <section class="band ctaband"><div class="wrap"><div class="eyebrow gold">${esc(L)}</div><h2>${md(clean(rows(b)[0] || 'Vamos conversar'))}</h2><div class="ctatext">${paras(b)}</div><a class="cta" href="#form">${esc(cta)} →</a></div></section>`);
+      } else if (/contexto/i.test(L)) {
+        blocks.push(wrap('', `<p class="lead">${md(clean(rows(b).join(' ')))}</p>`));
+      } else {
+        blocks.push(wrap(L, paras(b)));
+      }
+    });
+
+    // ---- formulário ----
+    const formSec = find(/formul/i);
+    let fields = bullets(formSec ? formSec.body : '');
+    if (!fields.length) fields = ['Nome completo', 'Cargo', 'Empresa', 'E-mail corporativo', 'Telefone (opcional)'];
+    const formTitle = formSec ? (rows(formSec.body).find(l => !/^[-•*]/.test(l) && !/^\d/.test(l) && !/\[/.test(l)) || '') : '';
+    const inputs = fields.filter(f => !/\[|bot(ã|a)o|cta/i.test(f)).map(f => {
+      const label = f.replace(/\s*\(opcional\)/i, '');
+      const req = !/opcional/i.test(f);
+      let ctrl;
+      if (/sim\/?n(ã|a)o|agendar|gostaria/i.test(f)) ctrl = `<select name="${esc(label)}"><option value="">Selecione</option><option>Sim</option><option>Não</option></select>`;
+      else { const type = /mail/i.test(f) ? 'email' : /telefone|fone|whats/i.test(f) ? 'tel' : 'text'; ctrl = `<input type="${type}" name="${esc(label)}" ${req ? 'required' : ''} placeholder="${esc(label)}">`; }
+      return `<label class="fld"><span>${esc(label)}${req ? '' : ' <em>(opcional)</em>'}</span>${ctrl}</label>`;
+    }).join('');
+    const formHtml = `  <section class="band" id="form"><div class="wrap"><div class="formcard"><div class="formcopy"><div class="eyebrow gold">Download gratuito</div><h2>${md(clean(formTitle) || 'Receba o Special Report')}</h2><p>Preencha os campos para receber o material no seu e-mail.</p></div><form onsubmit="event.preventDefault();this.querySelector('.cta').textContent='Enviado ✓';">${inputs}<button type="submit" class="cta full">${esc(cta)}</button><p class="priv">Ao enviar, você concorda com nossa Política de Privacidade. Seus dados não serão compartilhados.</p></form></div></div></section>`;
+
+    const css = `*{box-sizing:border-box}body{margin:0;font-family:'Karla',-apple-system,system-ui,sans-serif;color:#1D2C31;background:#F7F5EF;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2{font-family:'Playfair Display',Georgia,serif;font-weight:700;letter-spacing:-.01em;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding:0 28px}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9C7B37;font-weight:700;margin-bottom:14px}
+.eyebrow.gold{color:#C9A45B}
+.hero{background:linear-gradient(155deg,#142B33 0%,#1E3E49 100%);color:#F4F2EC;padding:86px 0 92px;position:relative;overflow:hidden}
+.hero:after{content:'';position:absolute;right:-140px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(201,164,91,.22),transparent 70%)}
+.hero .brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:30px}
+.hero .eyebrow{color:#C9A45B}
+.hero h1{font-size:46px;line-height:1.12;max-width:760px;color:#fff}
+.hero .sub{font-size:19px;color:#CBD8DC;max-width:620px;margin:22px 0 0;line-height:1.55}
+.cta{display:inline-block;background:#C9A45B;color:#142B33;font-weight:700;font-family:'Karla',sans-serif;padding:15px 30px;border-radius:9px;margin-top:34px;text-decoration:none;font-size:15px;border:none;cursor:pointer;transition:background .15s,transform .15s}
+.cta:hover{background:#d8b775;transform:translateY(-1px)}
+.cta.full{width:100%;text-align:center;margin-top:8px;font-size:16px;padding:16px}
+.band{padding:64px 0;border-bottom:1px solid #E7E2D5}
+.band.soft{background:#EFEBE0}
+h2{font-size:31px;line-height:1.2;margin-bottom:22px;max-width:640px}
+.band p{font-size:16px;color:#3B4A50;margin:0 0 14px;max-width:720px}
+.lead{font-size:19px !important;color:#2A3A40 !important;line-height:1.6;max-width:760px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;margin-top:6px}
+.stat{background:#fff;border:1px solid #E7E2D5;border-radius:14px;padding:26px 24px}
+.statn{font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:#1E3E49;line-height:1}
+.statc{font-size:14px;color:#5C6A70;margin-top:10px;line-height:1.5}
+.chals{display:grid;gap:14px;margin-top:6px}
+.chal{display:flex;gap:18px;align-items:flex-start;background:#fff;border:1px solid #E7E2D5;border-radius:12px;padding:20px 22px}
+.cnum{font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:#C9A45B;min-width:34px}
+.chal p{margin:0;font-size:16px;color:#2F3E44}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:#fff;border:1px solid #D9D2C2;border-radius:999px;padding:9px 18px;font-size:14px;font-weight:600;color:#33474E}
+.checks{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:12px}
+.checks li{display:flex;gap:13px;align-items:flex-start;font-size:16px;color:#2F3E44}
+.ck{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#E7EEEC;color:#1E3E49;font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px}
+.ctaband{background:linear-gradient(155deg,#142B33,#1E3E49);color:#fff;text-align:center;border:none}
+.caband .eyebrow,.cataband .eyebrow{color:#C9A45B}
+.ctaband h2{color:#fff;margin:0 auto 16px}
+.ctatext p{color:#CBD8DC;margin:0 auto 6px;max-width:600px}
+.formcard{background:#fff;border:1px solid #E7E2D5;border-radius:18px;padding:44px;max-width:640px;margin:0 auto;box-shadow:0 24px 60px rgba(20,43,51,.08)}
+.formcopy{text-align:center;margin-bottom:26px}
+.formcopy h2{margin:0 auto 8px}
+.formcopy p{margin:0 auto;color:#5C6A70;font-size:15px}
+.fld{display:block;margin-bottom:15px}
+.fld span{display:block;font-size:13px;font-weight:700;color:#3B4A50;margin-bottom:6px}
+.fld em{color:#8B8878;font-weight:400;font-style:normal}
+.fld input,.fld select{width:100%;border:1px solid #D2CBBB;border-radius:9px;padding:12px 14px;font-size:15px;font-family:inherit;background:#FBFAF6;color:#1D2C31}
+.fld input:focus,.fld select:focus{outline:none;border-color:#C9A45B;box-shadow:0 0 0 3px rgba(201,164,91,.18)}
+.priv{font-size:12px;color:#8B8878;text-align:center;margin-top:14px}
+footer{background:#142B33;color:#8AA2A9;padding:34px 0;font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+footer .fb{font-family:'Playfair Display',serif;color:#fff;font-size:16px;font-weight:700}
+@media(max-width:640px){.hero{padding:60px 0}.hero h1{font-size:33px}h2{font-size:25px}.band{padding:46px 0}.formcard{padding:28px}}`;
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(cur.nome || 'Landing page')}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>${css}</style></head>
 <body>
-  <div class="vm-hero"><div class="vm-wrap" style="white-space:pre-line">${((hero && hero.body) || 'Título da campanha').replace(/</g, '&lt;')}
-  <a class="vm-cta" href="#form">${(cur.cta_principal || 'Baixar o material').replace(/</g, '')}</a></div></div>
-${body}
-  <footer style="padding:26px 40px;background:#1D2C31;color:#8AA2A9;font-size:12px;text-align:center">VendaMais · vendamais.com.br · Política de privacidade</footer>
+  <header class="hero"><div class="wrap"><div class="brand">VendaMais</div><div class="eyebrow">${esc(periodo)}</div><h1>${md(heroTitle)}</h1>${heroSub ? `<p class="sub">${md(heroSub)}</p>` : ''}<a class="cta" href="#form">${esc(cta)} →</a></div></header>
+  <main>
+${blocks.join('\n')}
+${formHtml}
+  </main>
+  <footer><div class="wrap"><span class="fb">VendaMais</span><span>vendamais.com.br · Política de Privacidade</span></div></footer>
 </body></html>`;
-    download((cur.nome || 'landing-page').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.html', html, 'text/html');
-    flash('HTML da landing page baixado.');
+    return html;
   }
+  function exportHtml() { download((cur.nome || 'landing-page').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.html', buildHtml(), 'text/html'); flash('HTML da landing page baixado.'); }
+  function previewHtml() { const w = window.open('', '_blank'); if (!w) { flash('Permita pop-ups para ver a prévia.'); return; } w.document.open(); w.document.write(buildHtml()); w.document.close(); }
   return <div>
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <div><Kicker>Etapa 4 · Produção</Kicker><H1>Landing page</H1>
-        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 600 }}>A IA escreve os blocos; você edita e exporta o HTML pronto para colar no WordPress.</p></div>
+        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 620 }}>A IA escreve os blocos a partir da estratégia. Veja a prévia da página desenhada e baixe o HTML pronto para o WordPress.</p></div>
       <Btn onClick={() => gen('lp', prompt, async t => setPieces(p => ({ ...p, lp: t })))} disabled={loading === 'lp'}>{val ? '↻ Regenerar' : 'Gerar landing page'}</Btn>
     </div>
     <div style={{ marginTop: 18 }}>
@@ -552,7 +672,8 @@ ${body}
             style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 12, padding: '18px 20px', fontSize: 13.5, lineHeight: 1.65, background: C.card, resize: 'vertical' }} />
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Btn kind="ghost" onClick={() => copy(val)}>Copiar texto</Btn>
-            <Btn kind="ghost" onClick={exportHtml}>Baixar HTML da página</Btn>
+            <Btn kind="ghost" onClick={previewHtml}>Ver prévia da página</Btn>
+            <Btn kind="ghost" onClick={exportHtml}>Baixar HTML</Btn>
             <Btn onClick={() => savePiece('lp', val)}>Salvar</Btn>
           </div>
         </div>
