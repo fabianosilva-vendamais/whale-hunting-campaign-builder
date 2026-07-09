@@ -15,8 +15,6 @@ const C = {
 const SYSTEM = `Você é estrategista sênior de marketing e vendas da VendaMais, especialista na operação Whale Hunting: conquista de contas de alto potencial (chamadas internamente de "super PCI") por meio de inteligência comercial, autoridade e relacionamento com decisores. Não é geração de leads em volume — é qualidade de lead, cargo certo, empresa certa, conversa executiva, oportunidade criada e proposta reativada.
 Regras de escrita: português do Brasil; tom sênior, consultivo e sóbrio; frases diretas. NUNCA use clichês de vendas, emojis, hype ou linguagem motivacional genérica. Baseie-se estritamente nos materiais e no contexto fornecidos — não invente dados, números ou nomes de clientes. Quando faltar informação, escreva de forma que funcione sem inventar.`;
 
-const money = () => {};
-
 // ---------- API helpers ----------
 async function ai(system, prompt) {
   const r = await fetch('/api/generate', {
@@ -116,6 +114,7 @@ function App() {
   async function openCampaign(id) {
     try {
       const rows = await db('GET', `campanhas?id=eq.${id}&select=*`);
+      if (!rows || !rows[0]) { flash('Campanha não encontrada.'); return; }
       const c = rows[0]; setCur(c);
       const mats = await db('GET', `materiais?campanha_id=eq.${id}&select=*`) || [];
       const mm = {}; mats.forEach(m => { mm[m.tipo] = m.texto_extraido || ''; }); setMaterials(mm);
@@ -257,22 +256,6 @@ Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
   </div>;
 }
 
-// ---------------- Login ----------------
-function Login({ onLogin, toast }) {
-  const [p, setP] = useState('');
-  return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.deep }}>
-    <div style={{ width: 360, background: C.card, borderRadius: 14, padding: 32, boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
-      <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 22, fontWeight: 600 }}>Whale Hunting</div>
-      <div style={{ fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold, fontWeight: 700, marginTop: 2 }}>Campaign Builder · VendaMais</div>
-      <p style={{ fontSize: 13, color: C.mut, marginTop: 16 }}>Acesso restrito. Digite a senha da equipe.</p>
-      <input type="password" value={p} onChange={e => setP(e.target.value)} onKeyDown={e => e.key === 'Enter' && onLogin(p)}
-        placeholder="Senha" style={{ width: '100%', border: '1px solid #CFC9B8', borderRadius: 8, padding: '11px 12px', fontSize: 14, background: '#FBFAF6', marginTop: 6 }} />
-      <Btn onClick={() => onLogin(p)} style={{ width: '100%', marginTop: 14 }}>Entrar</Btn>
-      {toast && <div style={{ marginTop: 12, fontSize: 12.5, color: C.red, textAlign: 'center' }}>{toast}</div>}
-    </div>
-  </div>;
-}
-
 // ---------------- Dashboard ----------------
 function Dash({ campaigns, onNew, onOpen, onDelete }) {
   const chip = s => ({ rascunho: [C.line2, C.mut], producao: [C.amberBg, C.amber], publicada: [C.greenBg, C.green], encerrada: [C.line2, C.mut] }[s] || [C.line2, C.mut]);
@@ -339,14 +322,69 @@ function CampForm({ cur, setCur, onSave, saving, onMat }) {
 
 // ---------------- Materials ----------------
 function Materials({ materials, setMaterials, onSave, saving, onNext }) {
+  const [reading, setReading] = useState('');
   const set = (k, v) => setMaterials({ ...materials, [k]: v });
+
+  function upload(key) {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.pdf,.txt,.md,.csv,text/plain';
+    inp.onchange = async () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      setReading(key);
+      try {
+        let text = '';
+        if (/\.pdf$/i.test(f.name)) {
+          if (!window.pdfjsLib) throw new Error('Leitor de PDF ainda carregando — tente de novo em alguns segundos.');
+          const buf = await f.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const tc = await page.getTextContent();
+            text += tc.items.map(it => it.str).join(' ') + '\n\n';
+          }
+        } else {
+          text = await f.text();
+        }
+        text = (text || '').trim();
+        if (!text) throw new Error('O arquivo não tem texto extraível (pode ser um PDF só de imagem/escaneado). Nesse caso, cole o texto manualmente.');
+        const prev = materials[key] || '';
+        set(key, prev ? prev + '\n\n' + text : text);
+      } catch (e) {
+        alert('Não foi possível ler o arquivo: ' + e.message);
+      }
+      setReading('');
+    };
+    inp.click();
+  }
+
+  const upBtn = (key, label) => <button onClick={() => upload(key)} disabled={reading === key}
+    style={{ background: '#fff', color: C.gold, border: '1px solid ' + C.line, borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: reading === key ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+    {reading === key ? 'Lendo arquivo…' : label}
+  </button>;
+
   return <div>
     <Kicker>Etapa 2 · Materiais</Kicker><H1>Materiais da campanha</H1>
-    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 640 }}>Cole o texto do Special Report, o resumo do Radar e a lista de contas-alvo. A IA usa isso para gerar a estratégia e o conteúdo — sem inventar dados.</p>
+    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 640 }}>Envie o arquivo (PDF é lido automaticamente) ou cole o texto direto na caixa. A IA usa isso para gerar a estratégia e o conteúdo — sem inventar dados.</p>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <Card><Field label="Texto do Special Report" area rows={8} value={materials.special_report} onChange={v => set('special_report', v)} ph="Cole aqui o conteúdo do PDF (copie e cole o texto do relatório)." /></Card>
-      <Card><Field label="Resumo do Radar (opcional)" area rows={3} value={materials.radar} onChange={v => set('radar', v)} ph="Recomendação de segmento, lacunas, prioridade." /></Card>
-      <Card><Field label="Lista de contas-alvo (opcional)" area rows={4} value={materials.contas} onChange={v => set('contas', v)} ph="Uma por linha: conta, contato-chave, cargo, prioridade." /></Card>
+      <Card>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#4C5B60' }}>Special Report</div>
+          {upBtn('special_report', 'Enviar PDF ou TXT')}
+        </div>
+        <Field label="" area rows={8} value={materials.special_report} onChange={v => set('special_report', v)} ph="Cole aqui o texto do relatório — ou use o botão acima para enviar o PDF e extrair o texto automaticamente." />
+      </Card>
+      <Card>
+        <Field label="Resumo do Radar (opcional)" area rows={3} value={materials.radar} onChange={v => set('radar', v)} ph="Recomendação de segmento, lacunas, prioridade." />
+      </Card>
+      <Card>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#4C5B60' }}>Lista de contas-alvo (opcional)</div>
+          {upBtn('contas', 'Enviar CSV ou TXT')}
+        </div>
+        <Field label="" area rows={4} value={materials.contas} onChange={v => set('contas', v)} ph="Uma por linha: conta, contato-chave, cargo, prioridade." />
+      </Card>
     </div>
     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 18 }}>
       <Btn onClick={onSave} disabled={saving}>{saving ? 'Salvando…' : 'Salvar materiais'}</Btn>
