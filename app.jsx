@@ -55,6 +55,23 @@ function download(name, text, type) {
   a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
+// datas: tela em DD/MM/AAAA, banco em AAAA-MM-DD
+function brToIso(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return null;
+}
+function isoToBr(s) {
+  if (!s) return '';
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : s;
+}
+function normalizeDates(row) {
+  return { ...row, periodo_inicio: isoToBr(row.periodo_inicio), periodo_fim: isoToBr(row.periodo_fim) };
+}
 
 // ---------- small UI atoms ----------
 function Btn({ children, onClick, kind, disabled, style }) {
@@ -115,7 +132,7 @@ function App() {
     try {
       const rows = await db('GET', `campanhas?id=eq.${id}&select=*`);
       if (!rows || !rows[0]) { flash('Campanha não encontrada.'); return; }
-      const c = rows[0]; setCur(c);
+      const c = normalizeDates(rows[0]); setCur(c);
       const mats = await db('GET', `materiais?campanha_id=eq.${id}&select=*`) || [];
       const mm = {}; mats.forEach(m => { mm[m.tipo] = m.texto_extraido || ''; }); setMaterials(mm);
       const pcs = await db('GET', `pecas?campanha_id=eq.${id}&select=*`) || [];
@@ -134,11 +151,11 @@ function App() {
     setLoading('save');
     try {
       const payload = { ...cur }; delete payload.id; delete payload.criada_em;
-      ['periodo_inicio', 'periodo_fim'].forEach(k => { if (!payload[k]) payload[k] = null; });
+      ['periodo_inicio', 'periodo_fim'].forEach(k => { payload[k] = brToIso(payload[k]); });
       let row;
       if (cur.id) { row = (await db('PATCH', `campanhas?id=eq.${cur.id}`, payload))[0]; }
       else { row = (await db('POST', 'campanhas', payload))[0]; }
-      setCur(row); flash('Campanha salva.'); loadCampaigns();
+      setCur(normalizeDates(row)); flash('Campanha salva.'); loadCampaigns();
     } catch (e) { flash('Erro ao salvar: ' + e.message); }
     setLoading('');
   }
@@ -203,14 +220,14 @@ Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
 
   // ============================ RENDER ============================
   const navItems = [
-    ['dash', 'Campanhas'],
-    ['camp', cur && cur.id ? 'Campanha' : 'Nova campanha'],
-    ['mat', 'Materiais'],
-    ['est', 'Estratégia'],
-    ['lp', 'Landing page'],
-    ['regua', 'Régua de e-mails'],
-    ['cont', 'Conteúdo'],
-    ['exp', 'Exportar']
+    { id: 'dash', label: 'Campanhas', num: '01', section: 'Visão geral' },
+    { id: 'camp', label: cur && cur.id ? 'Campanha' : 'Nova campanha', num: '02', section: 'Criação' },
+    { id: 'mat', label: 'Materiais', num: '03' },
+    { id: 'est', label: 'Estratégia', num: '04', section: 'Inteligência' },
+    { id: 'lp', label: 'Landing page', num: '05', section: 'Produção' },
+    { id: 'regua', label: 'Régua de e-mails', num: '06' },
+    { id: 'cont', label: 'Conteúdo', num: '07' },
+    { id: 'exp', label: 'Exportar', num: '08', section: 'Lançamento' }
   ];
   const needCampaign = ['mat', 'est', 'lp', 'regua', 'cont', 'exp'];
 
@@ -221,13 +238,17 @@ Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
         <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600, color: '#fff' }}>Whale Hunting</div>
         <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold2, fontWeight: 600, marginTop: 3 }}>Campaign Builder</div>
       </div>
-      <div style={{ flex: 1, padding: '8px 0' }}>
-        {navItems.map(([id, label]) => {
-          const dis = needCampaign.includes(id) && !(cur && cur.id);
-          const act = screen === id;
-          return <div key={id} onClick={() => { if (dis) { flash('Crie e salve uma campanha primeiro.'); return; } setScreen(id); }}
-            style={{ padding: '9px 20px', cursor: dis ? 'default' : 'pointer', fontSize: 13.5, color: dis ? '#4A6068' : (act ? '#EFDFB9' : '#9FB4BA'), background: act ? 'rgba(201,164,91,.13)' : 'transparent', borderLeft: '3px solid ' + (act ? C.gold2 : 'transparent'), fontWeight: act ? 700 : 400 }}>
-            {label}
+      <div style={{ flex: 1, padding: '4px 0 8px' }}>
+        {navItems.map((it) => {
+          const dis = needCampaign.includes(it.id) && !(cur && cur.id);
+          const act = screen === it.id;
+          return <div key={it.id}>
+            {it.section && <div style={{ padding: '14px 20px 5px', fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: '#5E7B84', fontWeight: 700 }}>{it.section}</div>}
+            <div onClick={() => { if (dis) { flash('Crie e salve uma campanha primeiro.'); return; } setScreen(it.id); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 20px', cursor: dis ? 'default' : 'pointer', fontSize: 13.5, color: dis ? '#4A6068' : (act ? '#EFDFB9' : '#9FB4BA'), background: act ? 'rgba(201,164,91,.13)' : 'transparent', borderLeft: '3px solid ' + (act ? C.gold2 : 'transparent'), fontWeight: act ? 700 : 400 }}>
+              <span style={{ width: 18, fontSize: 10.5, color: dis ? '#3C5158' : (act ? C.gold2 : '#5E7B84'), fontVariantNumeric: 'tabular-nums' }}>{it.num}</span>
+              <span>{it.label}</span>
+            </div>
           </div>;
         })}
       </div>
@@ -302,8 +323,8 @@ function CampForm({ cur, setCur, onSave, saving, onMat }) {
         <Field label="Solução principal VendaMais" value={cur.solucao_principal} onChange={v => set('solucao_principal', v)} ph="Ex.: consultoria de estrutura comercial" />
         <Field label="Soluções secundárias" value={cur.solucoes_secundarias} onChange={v => set('solucoes_secundarias', v)} ph="Separadas por vírgula" />
         <Field label="CTA principal" value={cur.cta_principal} onChange={v => set('cta_principal', v)} ph="Ex.: Baixar o Special Report" />
-        <Field label="Início" value={cur.periodo_inicio} onChange={v => set('periodo_inicio', v)} ph="AAAA-MM-DD" />
-        <Field label="Fim" value={cur.periodo_fim} onChange={v => set('periodo_fim', v)} ph="AAAA-MM-DD" />
+        <Field label="Início" value={cur.periodo_inicio} onChange={v => set('periodo_inicio', v)} ph="DD/MM/AAAA" />
+        <Field label="Fim" value={cur.periodo_fim} onChange={v => set('periodo_fim', v)} ph="DD/MM/AAAA" />
         <div style={{ gridColumn: '1 / -1' }}><Field label="Restrições de comunicação" area rows={2} value={cur.restricoes} onChange={v => set('restricoes', v)} ph="O que a comunicação não pode fazer ou dizer" /></div>
         <label style={{ display: 'block' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#4C5B60', marginBottom: 5 }}>Status</div>
