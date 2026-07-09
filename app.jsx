@@ -48,7 +48,37 @@ function parseSections(text) {
   if (out.length === 0 && text.trim()) out.push({ label: '', body: text.trim() });
   return out;
 }
-function copy(t) { navigator.clipboard && navigator.clipboard.writeText(t); }
+function copy(t) {
+  let ok = false;
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t); ok = true; } } catch (e) {}
+  if (!ok) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ok = document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  showToast(ok ? 'Copiado para a área de transferência' : 'Não foi possível copiar');
+  return ok;
+}
+function showToast(msg) {
+  let el = document.getElementById('__wh_toast');
+  if (!el) {
+    el = document.createElement('div'); el.id = '__wh_toast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1E3A43;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-family:inherit;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .2s;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity = '1';
+  clearTimeout(el.__t); el.__t = setTimeout(() => { el.style.opacity = '0'; }, 1700);
+}
+function RichText({ text }) {
+  return String(text || '').split('\n').map((ln, i) => {
+    const segs = ln.split(/(\*\*[^*]+\*\*)/g).map((s, j) =>
+      /^\*\*[^*]+\*\*$/.test(s) ? <strong key={j}>{s.slice(2, -2)}</strong> : s);
+    return <div key={i} style={{ minHeight: ln.trim() ? undefined : 7 }}>{segs}</div>;
+  });
+}
 function download(name, text, type) {
   const blob = new Blob([text], { type: type || 'text/plain' });
   const a = document.createElement('a');
@@ -216,20 +246,23 @@ function App() {
   }
 
   async function savePiece(tipo, conteudo) {
-    if (!cur.id) return;
-    await db('DELETE', `pecas?campanha_id=eq.${cur.id}&tipo=eq.${tipo}`);
-    await db('POST', 'pecas', { campanha_id: cur.id, tipo, conteudo, status: 'rascunho' });
+    if (!cur || !cur.id) { flash('Salve a campanha primeiro.'); return; }
+    try {
+      await db('DELETE', `pecas?campanha_id=eq.${cur.id}&tipo=eq.${tipo}`);
+      await db('POST', 'pecas', { campanha_id: cur.id, tipo, conteudo, status: 'rascunho' });
+      flash('Salvo com sucesso.');
+    } catch (e) { flash('Erro ao salvar: ' + e.message); }
   }
 
   // -------- contexto para a IA --------
-  function ctx() {
+  function ctx(opts) {
     const c = cur || {};
     const txt = t => materials.filter(m => m.tipo === t && m.text).map(m => m.text).join('\n\n');
     const sr = txt('special_report'), rd = txt('radar'), co = txt('contas');
     const igFiles = materials.filter(m => m.tipo === 'infografico');
     const igTxt = igFiles.map(m => m.text).filter(Boolean).join('\n\n');
     const ig = igTxt || (igFiles.length ? '(imagem anexada, sem texto — usar apenas como referência visual)' : '(não fornecido)');
-    return `CONTEXTO DA CAMPANHA
+    let base = `CONTEXTO DA CAMPANHA
 Segmento/tema do mês: ${c.segmento || '—'}
 Objetivo: ${c.objetivo || '—'}
 Público-alvo: ${c.publico_alvo || '—'}
@@ -244,6 +277,10 @@ Special Report (texto): ${sr ? sr.slice(0, 6000) : '(não fornecido)'}
 Resumo do Radar: ${rd || '(não fornecido)'}
 Infográfico: ${ig}
 Lista de contas-alvo: ${co || '(não fornecida)'}`;
+    if (!(opts && opts.forStrategy) && pieces.analise && String(pieces.analise).trim()) {
+      base += `\n\n=== ANÁLISE ESTRATÉGICA APROVADA (use como diretriz central; mantenha coerência total com ela) ===\n${String(pieces.analise).slice(0, 4500)}`;
+    }
+    return base;
   }
 
   async function gen(tipo, prompt, after) {
@@ -304,8 +341,7 @@ Lista de contas-alvo: ${co || '(não fornecida)'}`;
         {screen === 'camp' && <CampForm cur={cur} setCur={setCur} onSave={saveCampaign} saving={loading === 'save'} onMat={() => setScreen('mat')} />}
         {screen === 'mat' && <Materials materials={materials} onAdd={addAttachment} onRemove={removeAttachment} busy={loading} onNext={() => setScreen('est')} />}
         {screen === 'est' && <Strategy pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
-        {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
-        {screen === 'regua' && <Regua pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
+        {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}        {screen === 'regua' && <Regua pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'cont' && <Conteudo pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'exp' && <Exportar cur={cur} materials={materials} pieces={pieces} flash={flash} />}
       </div>
@@ -435,29 +471,46 @@ function Materials({ materials, onAdd, onRemove, busy, onNext }) {
 
 // ---------------- Strategy ----------------
 function Strategy({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
+  const [edit, setEdit] = useState(false);
   const val = pieces.analise || '';
-  const prompt = `${ctx()}\n\nGere a ANÁLISE ESTRATÉGICA da campanha, em texto corrido organizado nestas seções (use exatamente estes marcadores):\n=== TESE CENTRAL ===\n(um parágrafo forte)\n=== DORES DO SEGMENTO ===\n(5 itens)\n=== DADOS UTILIZÁVEIS DO REPORT ===\n(3 a 5 dados, apenas os que aparecem nos materiais)\n=== OBJEÇÕES E RESPOSTAS ===\n(3 pares objeção → resposta)\n=== CTAS RECOMENDADOS ===\n(principal e secundário)\n=== RISCOS DE COMUNICAÇÃO ===\n(lista curta)`;
+  const set = t => setPieces(p => ({ ...p, analise: t }));
+  const prompt = `${ctx({ forStrategy: true })}\n\nGere a ANÁLISE ESTRATÉGICA da campanha para a operação Whale Hunting. Português do Brasil, tom sênior e consultivo, sem clichês. Use EXATAMENTE estes marcadores de seção:\n=== TESE CENTRAL ===\n(2 a 3 frases: a leitura de mercado que justifica mirar este segmento agora, ligada ao objetivo de conquistar contas super PCI)\n=== PERFIL DA CONTA-ALVO (SUPER PCI) ===\n(porte, momento e sinais de fit da empresa ideal + os cargos decisores a mirar)\n=== DORES DO DECISOR ===\n(4 a 5 dores reais do cargo-alvo neste segmento, na linguagem dele — nada genérico de "vender mais")\n=== DADOS UTILIZÁVEIS DO MATERIAL ===\n(3 a 5 dados/estatísticas que APARECEM nos materiais, com o número. Se não houver nenhum, escreva "Nenhum dado numérico disponível nos materiais" — não invente)\n=== ÂNGULO DE AUTORIDADE ===\n(o ponto de vista que posiciona a VendaMais como especialista do segmento, não como fornecedor genérico)\n=== OBJEÇÕES E RESPOSTAS ===\n(3 pares: objeção real do decisor → resposta consultiva curta)\n=== CAMINHO PARA A REUNIÃO EXECUTIVA ===\n(a sequência do download do material até a conversa com o decisor: qual gatilho leva à reunião)\n=== CTAS RECOMENDADOS ===\n(principal e secundário, coerentes com o CTA da campanha)\n=== RISCOS DE COMUNICAÇÃO ===\n(o que evitar para não soar genérico nem queimar a conta)`;
+  const secs = parseSections(val);
   return <div>
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <div><Kicker>Etapa 3 · Inteligência</Kicker><H1>Análise estratégica</H1>
-        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 600 }}>Gerada pela IA a partir do tema e dos materiais. Edite livremente — a aprovação é sua.</p></div>
-      <Btn onClick={() => gen('analise', prompt, async t => { setPieces(p => ({ ...p, analise: t })); })} disabled={loading === 'analise'}>
+        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 640 }}>É o briefing central da campanha. A partir dela a IA escreve a landing page, a régua de e-mails e o conteúdo — por isso, gere, ajuste e salve antes de seguir para as próximas etapas.</p></div>
+      <Btn onClick={() => gen('analise', prompt, async t => set(t))} disabled={loading === 'analise'}>
         {val ? '↻ Regenerar' : 'Gerar análise'}
       </Btn>
     </div>
     <div style={{ marginTop: 18 }}>
-      {loading === 'analise' ? <Card><Spinner /></Card>
-        : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <textarea value={val} onChange={e => setPieces(p => ({ ...p, analise: e.target.value }))} rows={22}
-            style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 12, padding: '18px 20px', fontSize: 13.5, lineHeight: 1.65, background: C.card, resize: 'vertical' }} />
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Btn kind="ghost" onClick={() => copy(val)}>Copiar</Btn>
-            <Btn onClick={async () => { await savePiece('analise', val); flash('Análise salva.'); }}>Salvar</Btn>
+      {loading === 'analise' ? <Card><Spinner label="Gerando a análise estratégica…" /></Card>
+        : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, background: '#EDF1F0', border: '1px solid #D3E0DE', borderRadius: 10, padding: '10px 14px' }}>
+            <div style={{ fontSize: 12.5, color: '#1E4A50' }}>Esta análise alimenta automaticamente a landing page, a régua e o conteúdo. Salve para guardá-la na campanha.</div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <Btn kind="ghost" onClick={() => setEdit(!edit)}>{edit ? 'Ver formatado' : 'Editar texto'}</Btn>
+              <Btn kind="ghost" onClick={() => copy(val)}>Copiar tudo</Btn>
+              <Btn onClick={() => savePiece('analise', val)}>Salvar</Btn>
+            </div>
           </div>
+          {edit
+            ? <textarea value={val} onChange={e => set(e.target.value)} rows={24}
+                style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 12, padding: '18px 20px', fontSize: 13.5, lineHeight: 1.65, background: C.card, resize: 'vertical', fontFamily: 'inherit' }} />
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {secs.length ? secs.map((s, i) => <Card key={i}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{ fontSize: 11.5, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, color: C.gold }}>{s.label}</div>
+                    <Btn kind="soft" onClick={() => copy(s.body)}>Copiar</Btn>
+                  </div>
+                  <div style={{ fontSize: 13.5, color: '#37474d', lineHeight: 1.7 }}><RichText text={s.body} /></div>
+                </Card>) : <Card><div style={{ fontSize: 13.5, color: '#37474d', lineHeight: 1.7 }}><RichText text={val} /></div></Card>}
+              </div>}
         </div>
           : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
             <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600 }}>Nenhuma análise gerada</div>
-            <p style={{ fontSize: 13, color: C.mut, maxWidth: 500, margin: '8px auto 0' }}>Preencha a campanha e os materiais, depois clique em “Gerar análise”. A IA devolve tese, dores, dados, objeções, CTAs e riscos.</p>
+            <p style={{ fontSize: 13, color: C.mut, maxWidth: 540, margin: '8px auto 0' }}>Preencha a campanha e anexe os materiais, depois clique em “Gerar análise”. A IA devolve tese, perfil da conta-alvo, dores do decisor, dados do material, ângulo de autoridade, objeções, caminho para a reunião e riscos — e usa tudo isso para escrever as próximas etapas.</p>
           </Card>}
     </div>
   </div>;
@@ -500,7 +553,7 @@ ${body}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Btn kind="ghost" onClick={() => copy(val)}>Copiar texto</Btn>
             <Btn kind="ghost" onClick={exportHtml}>Baixar HTML da página</Btn>
-            <Btn onClick={async () => { await savePiece('lp', val); flash('Landing page salva.'); }}>Salvar</Btn>
+            <Btn onClick={() => savePiece('lp', val)}>Salvar</Btn>
           </div>
         </div>
           : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
@@ -534,7 +587,7 @@ function Regua({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
           </Card>)}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Btn kind="ghost" onClick={() => copy(val)}>Copiar tudo</Btn>
-            <Btn onClick={async () => { await savePiece('regua', val); flash('Régua salva.'); }}>Salvar</Btn>
+            <Btn onClick={() => savePiece('regua', val)}>Salvar</Btn>
           </div>
         </div>
           : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
@@ -577,7 +630,7 @@ function Conteudo({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
           <div style={{ fontSize: 13, color: '#37474d', lineHeight: 1.65, whiteSpace: 'pre-line' }}>{s.body}</div>
         </Card>)}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <Btn onClick={async () => { await savePiece(key, val); flash('Conteúdo salvo.'); }}>Salvar</Btn>
+          <Btn onClick={() => savePiece(key, val)}>Salvar</Btn>
         </div>
       </div>
         : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
