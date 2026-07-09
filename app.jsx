@@ -205,6 +205,7 @@ Restrições de comunicação: ${c.restricoes || '—'}
 MATERIAIS FORNECIDOS
 Special Report (texto): ${materials.special_report ? materials.special_report.slice(0, 6000) : '(não fornecido)'}
 Resumo do Radar: ${materials.radar || '(não fornecido)'}
+Dados do infográfico: ${materials.infografico || '(não fornecido)'}
 Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
   }
 
@@ -346,10 +347,10 @@ function Materials({ materials, setMaterials, onSave, saving, onNext }) {
   const [reading, setReading] = useState('');
   const set = (k, v) => setMaterials({ ...materials, [k]: v });
 
-  function upload(key) {
+  function upload(key, accept) {
     const inp = document.createElement('input');
     inp.type = 'file';
-    inp.accept = '.pdf,.txt,.md,.csv,text/plain';
+    inp.accept = accept || '.pdf,.txt,.md,.csv,text/plain';
     inp.onchange = async () => {
       const f = inp.files && inp.files[0];
       if (!f) return;
@@ -365,47 +366,60 @@ function Materials({ materials, setMaterials, onSave, saving, onNext }) {
             const tc = await page.getTextContent();
             text += tc.items.map(it => it.str).join(' ') + '\n\n';
           }
+        } else if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name)) {
+          throw new Error('IMG');
         } else {
           text = await f.text();
         }
         text = (text || '').trim();
-        if (!text) throw new Error('O arquivo não tem texto extraível (pode ser um PDF só de imagem/escaneado). Nesse caso, cole o texto manualmente.');
+        if (!text) throw new Error('O arquivo não tem texto extraível (pode ser um PDF só de imagem/escaneado). Nesse caso, digite os dados manualmente.');
         const prev = materials[key] || '';
         set(key, prev ? prev + '\n\n' + text : text);
       } catch (e) {
-        alert('Não foi possível ler o arquivo: ' + e.message);
+        if (e.message === 'IMG') alert('A imagem não é lida automaticamente. Escreva no campo os números e a mensagem principal que aparecem no infográfico — é isso que a IA usa. A imagem em si você aproveita depois na landing page e nos posts.');
+        else alert('Não foi possível ler o arquivo: ' + e.message);
       }
       setReading('');
     };
     inp.click();
   }
 
-  const upBtn = (key, label) => <button onClick={() => upload(key)} disabled={reading === key}
-    style={{ background: '#fff', color: C.gold, border: '1px solid ' + C.line, borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: reading === key ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+  const upBtn = (key, label, accept) => <button onClick={() => upload(key, accept)} disabled={reading === key}
+    style={{ background: '#fff', color: C.gold, border: '1px solid ' + C.line, borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: reading === key ? 'wait' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
     {reading === key ? 'Lendo arquivo…' : label}
   </button>;
 
+  const matCard = (key, title, help, ph, rows, btn) => <Card>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div>
+        <div style={{ fontSize: 12, color: C.mut, marginTop: 3, lineHeight: 1.5 }}>{help}</div>
+      </div>
+      {btn && upBtn(key, btn[0], btn[1])}
+    </div>
+    <textarea rows={rows} value={materials[key] || ''} onChange={e => set(key, e.target.value)} placeholder={ph}
+      style={{ width: '100%', border: '1px solid #CFC9B8', borderRadius: 8, padding: '10px 12px', fontSize: 14, background: '#FBFAF6', resize: 'vertical', fontFamily: 'inherit' }} />
+  </Card>;
+
   return <div>
     <Kicker>Etapa 2 · Materiais</Kicker><H1>Materiais da campanha</H1>
-    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 640 }}>Envie o arquivo (PDF é lido automaticamente) ou cole o texto direto na caixa. A IA usa isso para gerar a estratégia e o conteúdo — sem inventar dados.</p>
+    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Estes são os insumos que a IA usa para gerar a estratégia, a landing page, a régua e o conteúdo — ela não inventa nada, só trabalha com o que você colocar aqui. Envie o arquivo (PDF é lido sozinho) ou cole o texto.</p>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#4C5B60' }}>Special Report</div>
-          {upBtn('special_report', 'Enviar PDF ou TXT')}
-        </div>
-        <Field label="" area rows={8} value={materials.special_report} onChange={v => set('special_report', v)} ph="Cole aqui o texto do relatório — ou use o botão acima para enviar o PDF e extrair o texto automaticamente." />
-      </Card>
-      <Card>
-        <Field label="Resumo do Radar (opcional)" area rows={3} value={materials.radar} onChange={v => set('radar', v)} ph="Recomendação de segmento, lacunas, prioridade." />
-      </Card>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#4C5B60' }}>Lista de contas-alvo (opcional)</div>
-          {upBtn('contas', 'Enviar CSV ou TXT')}
-        </div>
-        <Field label="" area rows={4} value={materials.contas} onChange={v => set('contas', v)} ph="Uma por linha: conta, contato-chave, cargo, prioridade." />
-      </Card>
+      {matCard('special_report', 'Special Report (obrigatório)',
+        'O relatório-isca da campanha. É a principal fonte de dados e da tese. Envie o PDF que o texto é extraído automaticamente, ou cole o conteúdo.',
+        'Cole o texto do relatório aqui — ou use “Enviar PDF” acima.', 8, ['Enviar PDF ou TXT', '.pdf,.txt,.md,text/plain'])}
+
+      {matCard('radar', 'Informações do Radar (opcional)',
+        'O que o Radar apontou sobre este segmento: por que foi escolhido, lacunas de conteúdo, prioridade e concorrência. Cole o resumo ou anexe o documento.',
+        'Ex.: Segmento com alta procura e baixa concorrência. VendaMais ausente nas buscas por “estrutura comercial cooperativa”. Prioridade alta.', 4, ['Enviar PDF ou TXT', '.pdf,.txt,.md,text/plain'])}
+
+      {matCard('infografico', 'Infográfico (opcional)',
+        'A imagem do infográfico não é lida pela IA — então escreva aqui os números e a frase principal que aparecem nele. A imagem em si você usa depois na landing page e nos posts.',
+        'Ex.: 68% não têm processo de prospecção PJ · 3,4x mais conversão com cadência definida · mensagem central: “cresceram sem método”.', 4, ['Enviar imagem ou PDF', 'image/*,.pdf'])}
+
+      {matCard('contas', 'Lista de contas-alvo (opcional)',
+        'As contas de alto potencial (super PCI) que você quer conquistar. Uma por linha. Alimenta a segmentação do LinkedIn e a priorização comercial.',
+        'Ex.: Cooperativa Vale Verde, João Silva (Diretor Comercial), alta\nCrediSerra, Ana Souza (Superintendente), média', 4, ['Enviar CSV ou TXT', '.csv,.txt,text/plain'])}
     </div>
     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 18 }}>
       <Btn onClick={onSave} disabled={saving}>{saving ? 'Salvando…' : 'Salvar materiais'}</Btn>
