@@ -55,6 +55,19 @@ function download(name, text, type) {
   a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
+function safeName(s) { return String(s || 'arquivo').replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80); }
+async function extractPdfText(file) {
+  if (!window.pdfjsLib) return '';
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let t = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const p = await pdf.getPage(i);
+    const tc = await p.getTextContent();
+    t += tc.items.map(x => x.str).join(' ') + '\n\n';
+  }
+  return t.trim();
+}
 // datas: tela em DD/MM/AAAA, banco em AAAA-MM-DD
 function brToIso(s) {
   if (!s) return null;
@@ -113,7 +126,7 @@ function App() {
   const [screen, setScreen] = useState('dash');
   const [campaigns, setCampaigns] = useState([]);
   const [cur, setCur] = useState(null);         // campanha atual (objeto)
-  const [materials, setMaterials] = useState({}); // {special_report, radar, contas}
+  const [materials, setMaterials] = useState([]); // anexos: [{id,tipo,name,url,kind,text}]
   const [pieces, setPieces] = useState({});      // {analise, lp, regua, posts, ...}
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState('');    // chave de operação em curso
@@ -134,7 +147,7 @@ function App() {
       if (!rows || !rows[0]) { flash('Campanha não encontrada.'); return; }
       const c = normalizeDates(rows[0]); setCur(c);
       const mats = await db('GET', `materiais?campanha_id=eq.${id}&select=*`) || [];
-      const mm = {}; mats.forEach(m => { mm[m.tipo] = m.texto_extraido || ''; }); setMaterials(mm);
+      setMaterials(mats.map(r => { let meta = {}; try { meta = JSON.parse(r.observacoes || '{}'); } catch (e) {} return { id: r.id, tipo: r.tipo, name: meta.name || 'arquivo', url: meta.url || '', kind: meta.kind || 'file', text: r.texto_extraido || '' }; }));
       const pcs = await db('GET', `pecas?campanha_id=eq.${id}&select=*`) || [];
       const pp = {}; pcs.forEach(p => { pp[p.tipo] = p.conteudo; }); setPieces(pp);
       setScreen('camp');
@@ -143,7 +156,7 @@ function App() {
 
   function newCampaign() {
     setCur({ nome: '', segmento: '', objetivo: '', publico_alvo: '', cargos: '', solucao_principal: '', solucoes_secundarias: '', cta_principal: '', restricoes: '', periodo_inicio: '', periodo_fim: '', status: 'rascunho' });
-    setMaterials({}); setPieces({}); setScreen('camp');
+    setMaterials([]); setPieces({}); setScreen('camp');
   }
 
   async function saveCampaign() {
@@ -170,17 +183,36 @@ function App() {
     } catch (e) { flash('Erro ao excluir: ' + e.message); }
   }
 
-  async function saveMaterials() {
-    if (!cur.id) { flash('Salve a campanha primeiro.'); return; }
-    setLoading('mat');
+  async function addAttachment(tipo, file) {
+    if (!cur || !cur.id) { flash('Salve a campanha primeiro.'); return; }
+    setLoading('mat_' + tipo);
     try {
-      await db('DELETE', `materiais?campanha_id=eq.${cur.id}`);
-      const rows = Object.entries(materials).filter(([, v]) => v && v.trim())
-        .map(([tipo, texto_extraido]) => ({ campanha_id: cur.id, tipo, texto_extraido }));
-      if (rows.length) await db('POST', 'materiais', rows);
-      flash('Materiais salvos.');
-    } catch (e) { flash('Erro: ' + e.message); }
+      const path = cur.id + '/' + tipo + '/' + Date.now() + '-' + safeName(file.name);
+      const signR = await fetch('/api/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
+      const sign = await signR.json();
+      if (!signR.ok) throw new Error(sign.error || 'Erro ao preparar upload');
+      const put = await fetch(sign.uploadUrl, { method: 'PUT', headers: { 'content-type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file });
+      if (!put.ok) throw new Error('Falha no envio (' + put.status + '). Confirme que o bucket "materiais" existe e é público no Supabase.');
+      const isPdf = /\.pdf$/i.test(file.name);
+      const isImg = /^image\//.test(file.type || '') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name);
+      let text = '';
+      if (isPdf) { try { text = await extractPdfText(file); } catch (e) { text = ''; } }
+      else if (!isImg) { try { text = await file.text(); } catch (e) { text = ''; } }
+      const kind = isImg ? 'image' : (isPdf ? 'pdf' : 'file');
+      const obs = JSON.stringify({ name: file.name, url: sign.publicUrl, kind });
+      const row = (await db('POST', 'materiais', { campanha_id: cur.id, tipo, texto_extraido: text, observacoes: obs }))[0];
+      setMaterials(m => [...m, { id: row.id, tipo, name: file.name, url: sign.publicUrl, kind, text }]);
+      flash('Arquivo anexado.');
+    } catch (e) { flash('Erro ao anexar: ' + e.message); }
     setLoading('');
+  }
+
+  async function removeAttachment(att) {
+    try {
+      if (att.id) await db('DELETE', `materiais?id=eq.${att.id}`);
+      setMaterials(m => m.filter(x => x !== att));
+      flash('Anexo removido.');
+    } catch (e) { flash('Erro ao remover: ' + e.message); }
   }
 
   async function savePiece(tipo, conteudo) {
@@ -192,6 +224,11 @@ function App() {
   // -------- contexto para a IA --------
   function ctx() {
     const c = cur || {};
+    const txt = t => materials.filter(m => m.tipo === t && m.text).map(m => m.text).join('\n\n');
+    const sr = txt('special_report'), rd = txt('radar'), co = txt('contas');
+    const igFiles = materials.filter(m => m.tipo === 'infografico');
+    const igTxt = igFiles.map(m => m.text).filter(Boolean).join('\n\n');
+    const ig = igTxt || (igFiles.length ? '(imagem anexada, sem texto — usar apenas como referência visual)' : '(não fornecido)');
     return `CONTEXTO DA CAMPANHA
 Segmento/tema do mês: ${c.segmento || '—'}
 Objetivo: ${c.objetivo || '—'}
@@ -203,10 +240,10 @@ CTA principal: ${c.cta_principal || '—'}
 Restrições de comunicação: ${c.restricoes || '—'}
 
 MATERIAIS FORNECIDOS
-Special Report (texto): ${materials.special_report ? materials.special_report.slice(0, 6000) : '(não fornecido)'}
-Resumo do Radar: ${materials.radar || '(não fornecido)'}
-Dados do infográfico: ${materials.infografico || '(não fornecido)'}
-Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
+Special Report (texto): ${sr ? sr.slice(0, 6000) : '(não fornecido)'}
+Resumo do Radar: ${rd || '(não fornecido)'}
+Infográfico: ${ig}
+Lista de contas-alvo: ${co || '(não fornecida)'}`;
   }
 
   async function gen(tipo, prompt, after) {
@@ -265,7 +302,7 @@ Lista de contas-alvo: ${materials.contas || '(não fornecida)'}`;
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '30px 40px 80px' }}>
         {screen === 'dash' && <Dash campaigns={campaigns} onNew={newCampaign} onOpen={openCampaign} onDelete={deleteCampaign} />}
         {screen === 'camp' && <CampForm cur={cur} setCur={setCur} onSave={saveCampaign} saving={loading === 'save'} onMat={() => setScreen('mat')} />}
-        {screen === 'mat' && <Materials materials={materials} setMaterials={setMaterials} onSave={saveMaterials} saving={loading === 'mat'} onNext={() => setScreen('est')} />}
+        {screen === 'mat' && <Materials materials={materials} onAdd={addAttachment} onRemove={removeAttachment} busy={loading} onNext={() => setScreen('est')} />}
         {screen === 'est' && <Strategy pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'regua' && <Regua pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
@@ -343,86 +380,54 @@ function CampForm({ cur, setCur, onSave, saving, onMat }) {
 }
 
 // ---------------- Materials ----------------
-function Materials({ materials, setMaterials, onSave, saving, onNext }) {
-  const [reading, setReading] = useState('');
-  const set = (k, v) => setMaterials({ ...materials, [k]: v });
-
-  function upload(key, accept) {
+function Materials({ materials, onAdd, onRemove, busy, onNext }) {
+  function pick(tipo, accept) {
     const inp = document.createElement('input');
     inp.type = 'file';
-    inp.accept = accept || '.pdf,.txt,.md,.csv,text/plain';
-    inp.onchange = async () => {
-      const f = inp.files && inp.files[0];
-      if (!f) return;
-      setReading(key);
-      try {
-        let text = '';
-        if (/\.pdf$/i.test(f.name)) {
-          if (!window.pdfjsLib) throw new Error('Leitor de PDF ainda carregando — tente de novo em alguns segundos.');
-          const buf = await f.arrayBuffer();
-          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const tc = await page.getTextContent();
-            text += tc.items.map(it => it.str).join(' ') + '\n\n';
-          }
-        } else if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name)) {
-          throw new Error('IMG');
-        } else {
-          text = await f.text();
-        }
-        text = (text || '').trim();
-        if (!text) throw new Error('O arquivo não tem texto extraível (pode ser um PDF só de imagem/escaneado). Nesse caso, digite os dados manualmente.');
-        const prev = materials[key] || '';
-        set(key, prev ? prev + '\n\n' + text : text);
-      } catch (e) {
-        if (e.message === 'IMG') alert('A imagem não é lida automaticamente. Escreva no campo os números e a mensagem principal que aparecem no infográfico — é isso que a IA usa. A imagem em si você aproveita depois na landing page e nos posts.');
-        else alert('Não foi possível ler o arquivo: ' + e.message);
-      }
-      setReading('');
-    };
+    inp.accept = accept;
+    inp.onchange = () => { const f = inp.files && inp.files[0]; if (f) onAdd(tipo, f); };
     inp.click();
   }
-
-  const upBtn = (key, label, accept) => <button onClick={() => upload(key, accept)} disabled={reading === key}
-    style={{ background: '#fff', color: C.gold, border: '1px solid ' + C.line, borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: reading === key ? 'wait' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-    {reading === key ? 'Lendo arquivo…' : label}
-  </button>;
-
-  const matCard = (key, title, help, ph, rows, btn) => <Card>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-      <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div>
-        <div style={{ fontSize: 12, color: C.mut, marginTop: 3, lineHeight: 1.5 }}>{help}</div>
-      </div>
-      {btn && upBtn(key, btn[0], btn[1])}
-    </div>
-    <textarea rows={rows} value={materials[key] || ''} onChange={e => set(key, e.target.value)} placeholder={ph}
-      style={{ width: '100%', border: '1px solid #CFC9B8', borderRadius: 8, padding: '10px 12px', fontSize: 14, background: '#FBFAF6', resize: 'vertical', fontFamily: 'inherit' }} />
-  </Card>;
-
+  const cats = [
+    { tipo: 'special_report', title: 'Special Report', help: 'O relatório da campanha, em PDF. O texto é lido nos bastidores para alimentar a IA (você não precisa fazer nada).', accept: '.pdf,.txt,.md,text/plain', btn: 'Anexar PDF' },
+    { tipo: 'radar', title: 'Informações do Radar', help: 'O documento ou resumo do Radar (PDF ou TXT), quando houver.', accept: '.pdf,.txt,.md,text/plain', btn: 'Anexar arquivo' },
+    { tipo: 'infografico', title: 'Infográfico', help: 'A imagem do infográfico (PNG/JPG) ou PDF. Fica guardada para usar na landing page e nos posts.', accept: 'image/*,.pdf', btn: 'Anexar imagem' },
+    { tipo: 'contas', title: 'Lista de contas-alvo', help: 'A lista das contas super PCI (CSV, TXT ou PDF), quando houver.', accept: '.csv,.txt,.pdf,text/plain', btn: 'Anexar arquivo' }
+  ];
   return <div>
     <Kicker>Etapa 2 · Materiais</Kicker><H1>Materiais da campanha</H1>
-    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Estes são os insumos que a IA usa para gerar a estratégia, a landing page, a régua e o conteúdo — ela não inventa nada, só trabalha com o que você colocar aqui. Envie o arquivo (PDF é lido sozinho) ou cole o texto.</p>
+    <p style={{ margin: '0 0 22px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Anexe os arquivos da campanha — tudo opcional, anexe só o que tiver. Cada anexo é salvo na hora. Os PDFs alimentam a IA automaticamente; a imagem do infográfico fica guardada para a landing page.</p>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {matCard('special_report', 'Special Report (obrigatório)',
-        'O relatório-isca da campanha. É a principal fonte de dados e da tese. Envie o PDF que o texto é extraído automaticamente, ou cole o conteúdo.',
-        'Cole o texto do relatório aqui — ou use “Enviar PDF” acima.', 8, ['Enviar PDF ou TXT', '.pdf,.txt,.md,text/plain'])}
-
-      {matCard('radar', 'Informações do Radar (opcional)',
-        'O que o Radar apontou sobre este segmento: por que foi escolhido, lacunas de conteúdo, prioridade e concorrência. Cole o resumo ou anexe o documento.',
-        'Ex.: Segmento com alta procura e baixa concorrência. VendaMais ausente nas buscas por “estrutura comercial cooperativa”. Prioridade alta.', 4, ['Enviar PDF ou TXT', '.pdf,.txt,.md,text/plain'])}
-
-      {matCard('infografico', 'Infográfico (opcional)',
-        'A imagem do infográfico não é lida pela IA — então escreva aqui os números e a frase principal que aparecem nele. A imagem em si você usa depois na landing page e nos posts.',
-        'Ex.: 68% não têm processo de prospecção PJ · 3,4x mais conversão com cadência definida · mensagem central: “cresceram sem método”.', 4, ['Enviar imagem ou PDF', 'image/*,.pdf'])}
-
-      {matCard('contas', 'Lista de contas-alvo (opcional)',
-        'As contas de alto potencial (super PCI) que você quer conquistar. Uma por linha. Alimenta a segmentação do LinkedIn e a priorização comercial.',
-        'Ex.: Cooperativa Vale Verde, João Silva (Diretor Comercial), alta\nCrediSerra, Ana Souza (Superintendente), média', 4, ['Enviar CSV ou TXT', '.csv,.txt,text/plain'])}
+      {cats.map(cat => {
+        const files = materials.filter(a => a.tipo === cat.tipo);
+        const loading = busy === 'mat_' + cat.tipo;
+        return <Card key={cat.tipo}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{cat.title}</div>
+              <div style={{ fontSize: 12, color: C.mut, marginTop: 3, lineHeight: 1.5 }}>{cat.help}</div>
+            </div>
+            <button onClick={() => pick(cat.tipo, cat.accept)} disabled={loading}
+              style={{ background: '#fff', color: C.gold, border: '1px solid ' + C.line, borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+              {loading ? 'Enviando…' : '+ ' + cat.btn}
+            </button>
+          </div>
+          {files.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
+            {files.map((a, i) => <div key={a.id || i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FBFAF6', border: '1px solid ' + C.line, borderRadius: 10, padding: '8px 12px', maxWidth: 320 }}>
+              {a.kind === 'image'
+                ? <img src={a.url} alt={a.name} style={{ width: 46, height: 46, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                : <div style={{ width: 40, height: 46, borderRadius: 5, background: C.deep, color: C.gold2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{a.kind === 'pdf' ? 'PDF' : 'DOC'}</div>}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <a href={a.url} target="_blank" rel="noreferrer" style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: C.ink, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</a>
+                <div style={{ fontSize: 11, color: C.mut }}>{a.kind === 'image' ? 'imagem' : (a.kind === 'pdf' ? 'PDF · texto lido para a IA' : 'arquivo')}</div>
+              </div>
+              <span onClick={() => onRemove(a)} style={{ cursor: 'pointer', color: C.red, fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}>Remover</span>
+            </div>)}
+          </div>}
+        </Card>;
+      })}
     </div>
-    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 18 }}>
-      <Btn onClick={onSave} disabled={saving}>{saving ? 'Salvando…' : 'Salvar materiais'}</Btn>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
       <Btn kind="ghost" onClick={onNext}>Ir para Estratégia →</Btn>
     </div>
   </div>;
