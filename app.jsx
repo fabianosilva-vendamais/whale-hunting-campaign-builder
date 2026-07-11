@@ -282,12 +282,12 @@ function App() {
     } catch (e) { flash('Erro ao remover: ' + e.message); }
   }
 
-  async function savePiece(tipo, conteudo) {
+  async function savePiece(tipo, conteudo, quiet) {
     if (!cur || !cur.id) { flash('Salve a campanha primeiro.'); return; }
     try {
       await db('DELETE', `pecas?campanha_id=eq.${cur.id}&tipo=eq.${tipo}`);
       await db('POST', 'pecas', { campanha_id: cur.id, tipo, conteudo, status: 'rascunho' });
-      flash('Salvo com sucesso.');
+      if (!quiet) flash('Salvo com sucesso.');
     } catch (e) { flash('Erro ao salvar: ' + e.message); }
   }
 
@@ -339,9 +339,14 @@ Lista de contas-alvo: ${co || '(não fornecida)'}`;
     { id: 'lp', label: 'Landing page', num: '05', section: 'Produção' },
     { id: 'regua', label: 'Régua de e-mails', num: '06' },
     { id: 'cont', label: 'Conteúdo', num: '07' },
-    { id: 'exp', label: 'Exportar', num: '08', section: 'Lançamento' }
+    { id: 'ads', label: 'LinkedIn Ads Planner', num: '08' },
+    { id: 'ag', label: 'Agency Review Hub', num: '09', section: 'Revisão' },
+    { id: 'apr', label: 'Aprovações e versões', num: '10' },
+    { id: 'chk', label: 'Checklist final', num: '11', section: 'Lançamento' },
+    { id: 'exp', label: 'Exportar', num: '12' },
+    { id: 'res', label: 'Resultados e aprendizados', num: '13', section: 'Pós-campanha' }
   ];
-  const needCampaign = ['mat', 'est', 'lp', 'regua', 'cont', 'exp'];
+  const needCampaign = ['mat', 'est', 'lp', 'regua', 'cont', 'ads', 'ag', 'apr', 'chk', 'exp', 'res'];
 
   return <div style={{ display: 'flex', minHeight: '100vh' }}>
     {/* SIDEBAR */}
@@ -380,6 +385,11 @@ Lista de contas-alvo: ${co || '(não fornecida)'}`;
         {screen === 'est' && <Strategy pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}        {screen === 'regua' && <Regua pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'cont' && <Conteudo pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
+        {screen === 'ads' && <AdsPlanner pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
+        {screen === 'ag' && <AgencyHub pieces={pieces} setPieces={setPieces} savePiece={savePiece} flash={flash} />}
+        {screen === 'apr' && <Aprovacoes pieces={pieces} setPieces={setPieces} savePiece={savePiece} flash={flash} />}
+        {screen === 'chk' && <ChecklistFinal pieces={pieces} setPieces={setPieces} savePiece={savePiece} />}
+        {screen === 'res' && <Resultados cur={cur} pieces={pieces} setPieces={setPieces} savePiece={savePiece} flash={flash} />}
         {screen === 'exp' && <Exportar cur={cur} materials={materials} pieces={pieces} flash={flash} />}
       </div>
     </div>
@@ -898,6 +908,285 @@ function Conteudo({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   </div>;
 }
 
+// ---------------- LinkedIn Ads Planner ----------------
+function AdsPlanner({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
+  const val = pieces.ads_plan || '';
+  const prompt = `${ctx()}\n\n${ACIONAVEL}\n\nMonte o PLANO DE LINKEDIN ADS da campanha (plano de mídia executivo, pronto para configurar no Gerenciador de Campanhas). Use EXATAMENTE estes marcadores:\n=== OBJETIVO E ESTRUTURA DA CAMPANHA ===\n(objetivo de negócio, objetivo de mídia no LinkedIn e como a campanha se divide em fases/grupos de anúncio)\n=== SEGMENTAÇÃO ===\nRótulos um por linha: Cargos:\nSetores:\nTamanho de empresa:\nLocalização:\nContas-alvo (ABM):\nExclusões:\n=== FORMATOS E CRIATIVOS ===\n(quais formatos usar — imagem única, carrossel, document ad —, com qual peça do Content Studio cada um se conecta e por quê)\n=== ORÇAMENTO SUGERIDO ===\n(distribuição percentual por fase/grupo, lance sugerido e racional; NÃO invente valores absolutos em reais — trabalhe com percentuais e faixas)\n=== CRONOGRAMA DE VEICULAÇÃO ===\n(semanas 1 a 4: o que entra, o que pausa, o que otimizar)\n=== MENSURAÇÃO E UTMS ===\n(métricas que importam para Whale Hunting — lead certo, conta certa, reunião — e padrão de UTM por anúncio)\nSe houver lista de contas-alvo nos materiais, use-a na seção de ABM.`;
+  const secs = parseSections(val);
+  return <div>
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div><Kicker>Etapa 8 · Mídia</Kicker><H1>LinkedIn Ads Planner</H1>
+        <p style={{ margin: 0, color: C.mut, fontSize: 14, maxWidth: 640 }}>Plano de mídia executivo: segmentação, formatos, orçamento, cronograma e mensuração — pronto para configurar no Gerenciador de Campanhas do LinkedIn. As copies dos anúncios ficam na aba “Copies de anúncios” do Conteúdo.</p></div>
+      <Btn onClick={() => gen('ads_plan', prompt, async t => setPieces(p => ({ ...p, ads_plan: t })))} disabled={loading === 'ads_plan'}>{val ? '↻ Regenerar' : 'Gerar plano de ads'}</Btn>
+    </div>
+    <div style={{ marginTop: 18 }}>
+      {loading === 'ads_plan' ? <Card><Spinner label="Montando o plano de mídia…" /></Card>
+        : val ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {secs.map((s, i) => <Card key={i} style={{ borderLeft: '4px solid ' + C.gold2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{s.label}</div>
+              <Btn kind="soft" onClick={() => copy(s.body)}>Copiar</Btn>
+            </div>
+            <Body body={s.body} />
+          </Card>)}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <Btn kind="ghost" onClick={() => copy(val)}>Copiar tudo</Btn>
+            <Btn onClick={() => savePiece('ads_plan', val)}>Salvar plano</Btn>
+          </div>
+        </div>
+          : <Card style={{ borderStyle: 'dashed', textAlign: 'center', padding: '44px 24px' }}>
+            <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 17, fontWeight: 600 }}>Nenhum plano gerado</div>
+            <p style={{ fontSize: 13, color: C.mut, maxWidth: 520, margin: '8px auto 0' }}>Clique em “Gerar plano de ads”. A IA monta segmentação, formatos, distribuição de orçamento, cronograma e padrão de UTM — alinhados à análise estratégica.</p>
+          </Card>}
+    </div>
+  </div>;
+}
+
+// ---------------- Agency Review Hub ----------------
+const AG_STATUS = ['Não enviado', 'Enviado à agência', 'Em ajuste', 'Aprovado'];
+const AG_COLORS = { 'Não enviado': '#8B8878', 'Enviado à agência': '#1E4A50', 'Em ajuste': '#9C7B37', 'Aprovado': '#2E6B4F' };
+function AgencyHub({ pieces, setPieces, savePiece, flash }) {
+  const list = Array.isArray(pieces.agency_hub) ? pieces.agency_hub : [];
+  const [form, setForm] = useState({ nome: '', responsavel: '', prazo: '' });
+  function persist(next) { setPieces(p => ({ ...p, agency_hub: next })); savePiece('agency_hub', next, true); }
+  function add() {
+    if (!form.nome.trim()) { flash('Dê um nome à peça.'); return; }
+    persist([...list, { id: Date.now(), nome: form.nome.trim(), responsavel: form.responsavel.trim(), prazo: form.prazo.trim(), status: 'Não enviado', obs: '' }]);
+    setForm({ nome: '', responsavel: '', prazo: '' });
+  }
+  function upd(id, patch) { persist(list.map(x => x.id === id ? { ...x, ...patch } : x)); }
+  function del(id) { if (confirm('Remover esta peça do acompanhamento?')) persist(list.filter(x => x.id !== id)); }
+  function seed() {
+    const base = ['Post de lançamento (estático)', 'Card de dado (estático)', 'Carrossel (LinkedIn)', 'Anúncio para a landing page'];
+    persist([...list, ...base.filter(n => !list.some(x => x.nome === n)).map((n, i) => ({ id: Date.now() + i, nome: n, responsavel: '', prazo: '', status: 'Não enviado', obs: '' }))]);
+  }
+  const aprovadas = list.filter(x => x.status === 'Aprovado').length;
+  return <div>
+    <Kicker>Etapa 9 · Revisão</Kicker><H1>Agency Review Hub</H1>
+    <p style={{ margin: '0 0 18px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Acompanhe cada peça enviada à agência: quem é o responsável, prazo, status e observações de ajuste. Os briefings prontos para enviar estão na aba “Briefing para agência” do Conteúdo.</p>
+    {list.length > 0 && <div style={{ fontSize: 12.5, color: C.mut, marginBottom: 12 }}><strong style={{ color: C.ink }}>{aprovadas}</strong> de <strong style={{ color: C.ink }}>{list.length}</strong> peças aprovadas</div>}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {list.map(item => <Card key={item.id} style={{ borderLeft: '4px solid ' + (AG_COLORS[item.status] || C.line) }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{item.nome}</div>
+            <div style={{ display: 'flex', gap: 14, marginTop: 6, flexWrap: 'wrap', fontSize: 12, color: C.mut }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5 }}>Responsável:
+                <input value={item.responsavel} onChange={e => upd(item.id, { responsavel: e.target.value })} placeholder="nome" style={{ border: '1px solid ' + C.line, borderRadius: 6, padding: '4px 8px', fontSize: 12, background: '#FBFAF6', width: 120, fontFamily: 'inherit' }} /></label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5 }}>Prazo:
+                <input value={item.prazo} onChange={e => upd(item.id, { prazo: e.target.value })} placeholder="dd/mm" style={{ border: '1px solid ' + C.line, borderRadius: 6, padding: '4px 8px', fontSize: 12, background: '#FBFAF6', width: 80, fontFamily: 'inherit' }} /></label>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            {AG_STATUS.map(s => <button key={s} onClick={() => upd(item.id, { status: s })}
+              style={{ background: item.status === s ? AG_COLORS[s] : 'transparent', color: item.status === s ? '#fff' : '#66757B', border: '1px solid ' + (item.status === s ? AG_COLORS[s] : C.line), borderRadius: 999, padding: '5px 11px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{s}</button>)}
+            <span onClick={() => del(item.id)} style={{ cursor: 'pointer', color: C.red, fontSize: 11.5, fontWeight: 700, marginLeft: 4 }}>Remover</span>
+          </div>
+        </div>
+        <textarea value={item.obs} onChange={e => upd(item.id, { obs: e.target.value })} placeholder="Observações e pedidos de ajuste para a agência…" rows={2}
+          style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 8, padding: '8px 10px', fontSize: 12.5, background: '#FBFAF6', resize: 'vertical', fontFamily: 'inherit', marginTop: 12 }} />
+      </Card>)}
+      <Card style={{ background: '#F4F2EC' }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>Adicionar peça ao acompanhamento</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Nome da peça (ex.: Carrossel LinkedIn)" style={{ flex: 2, minWidth: 200, border: '1px solid #CFC9B8', borderRadius: 8, padding: '9px 12px', fontSize: 13, background: '#FBFAF6', fontFamily: 'inherit' }} />
+          <input value={form.responsavel} onChange={e => setForm({ ...form, responsavel: e.target.value })} placeholder="Responsável" style={{ flex: 1, minWidth: 120, border: '1px solid #CFC9B8', borderRadius: 8, padding: '9px 12px', fontSize: 13, background: '#FBFAF6', fontFamily: 'inherit' }} />
+          <input value={form.prazo} onChange={e => setForm({ ...form, prazo: e.target.value })} placeholder="Prazo (dd/mm)" style={{ width: 110, border: '1px solid #CFC9B8', borderRadius: 8, padding: '9px 12px', fontSize: 13, background: '#FBFAF6', fontFamily: 'inherit' }} />
+          <Btn onClick={add}>Adicionar</Btn>
+          {list.length === 0 && <Btn kind="ghost" onClick={seed}>Criar as 4 peças padrão</Btn>}
+        </div>
+      </Card>
+    </div>
+  </div>;
+}
+
+// ---------------- Aprovações e versões ----------------
+const APR_PIECES = [
+  ['analise', 'Análise estratégica'], ['lp', 'Landing page'], ['regua', 'Régua de e-mails'], ['ads_plan', 'Plano de LinkedIn Ads'],
+  ['cont_posts', 'Posts orgânicos'], ['cont_briefing', 'Briefing p/ agência'], ['cont_carrossel', 'Roteiro de carrossel'],
+  ['cont_ads', 'Copies de anúncios'], ['cont_pessoais', 'Posts pessoais'], ['cont_checklist', 'Checklist de publicação']
+];
+const APR_STATUS = ['Rascunho', 'Em revisão', 'Aprovado'];
+const APR_COLORS = { 'Rascunho': '#8B8878', 'Em revisão': '#9C7B37', 'Aprovado': '#2E6B4F' };
+function Aprovacoes({ pieces, setPieces, savePiece, flash }) {
+  const map = (pieces.aprovacoes && typeof pieces.aprovacoes === 'object') ? pieces.aprovacoes : {};
+  function persist(next) { setPieces(p => ({ ...p, aprovacoes: next })); savePiece('aprovacoes', next, true); }
+  function upd(key, patch) {
+    const curEntry = map[key] || { status: 'Rascunho', versao: 1, obs: '' };
+    persist({ ...map, [key]: { ...curEntry, ...patch } });
+  }
+  const geradas = APR_PIECES.filter(([k]) => pieces[k]);
+  const aprovadas = geradas.filter(([k]) => (map[k] || {}).status === 'Aprovado').length;
+  return <div>
+    <Kicker>Etapa 10 · Revisão</Kicker><H1>Aprovações e versões</H1>
+    <p style={{ margin: '0 0 18px', color: C.mut, fontSize: 14, maxWidth: 660 }}>O quadro de aprovação interna: cada peça gerada tem status, versão e observação. Ao regenerar uma peça já aprovada, suba a versão e volte o status para “Em revisão”.</p>
+    {geradas.length > 0 && <div style={{ fontSize: 12.5, color: C.mut, marginBottom: 12 }}><strong style={{ color: C.ink }}>{aprovadas}</strong> de <strong style={{ color: C.ink }}>{geradas.length}</strong> peças aprovadas</div>}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {APR_PIECES.map(([key, label]) => {
+        const has = !!pieces[key];
+        const e = map[key] || { status: 'Rascunho', versao: 1, obs: '' };
+        return <Card key={key} style={{ opacity: has ? 1 : .55, borderLeft: '4px solid ' + (has ? (APR_COLORS[e.status] || C.line) : C.line) }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 200 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>{label}</div>
+              {has ? <span style={{ fontSize: 10.5, fontWeight: 700, color: '#4C5B60', background: '#EAE7DC', borderRadius: 999, padding: '3px 9px' }}>v{e.versao || 1}</span>
+                : <span style={{ fontSize: 11, color: C.mut2 }}>ainda não gerada</span>}
+            </div>
+            {has && <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              {APR_STATUS.map(s => <button key={s} onClick={() => upd(key, { status: s })}
+                style={{ background: e.status === s ? APR_COLORS[s] : 'transparent', color: e.status === s ? '#fff' : '#66757B', border: '1px solid ' + (e.status === s ? APR_COLORS[s] : C.line), borderRadius: 999, padding: '5px 11px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{s}</button>)}
+              <Btn kind="soft" onClick={() => upd(key, { versao: (e.versao || 1) + 1, status: 'Em revisão' })}>+1 versão</Btn>
+            </div>}
+          </div>
+          {has && <input value={e.obs || ''} onChange={ev => upd(key, { obs: ev.target.value })} placeholder="Observação da revisão (o que ajustar, quem pediu, quando)…"
+            style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 8, padding: '8px 10px', fontSize: 12.5, background: '#FBFAF6', fontFamily: 'inherit', marginTop: 10 }} />}
+        </Card>;
+      })}
+    </div>
+  </div>;
+}
+
+// ---------------- Checklist final ----------------
+const CHK_GROUPS = [
+  ['Conteúdo e revisão', [
+    'Análise estratégica aprovada internamente',
+    'Landing page revisada (texto, dados e CTA corretos)',
+    'Régua de e-mails aprovada e sem placeholders {nome}/{empresa} esquecidos',
+    'Peças da agência aprovadas no Review Hub',
+    'Copies de anúncios revisadas (sem promessa de resultado)'
+  ]],
+  ['WordPress / Landing page', [
+    'LP publicada no WordPress e testada no celular',
+    'Formulário testado — lead chega ao destino certo',
+    'PDF do Special Report entregue corretamente após o preenchimento',
+    'UTMs aplicadas em todos os links de entrada da LP'
+  ]],
+  ['Bitrix / Régua', [
+    'Os 5 e-mails configurados com os prazos corretos (imediato, D+2, D+5, D+8, D+12)',
+    'Condições de pausa configuradas (lead respondeu ou agendou)',
+    'Tarefas comerciais criadas para leads de contas-alvo',
+    'Disparo de teste feito para e-mail interno'
+  ]],
+  ['LinkedIn', [
+    'Posts orgânicos agendados nas datas do plano',
+    'Campanha de ads configurada conforme o Ads Planner (segmentação e exclusões)',
+    'Contas-alvo aplicadas como público ABM',
+    'Orçamento e cronograma revisados por quem aprova o investimento'
+  ]],
+  ['Mensuração', [
+    'Metas da campanha registradas (leads certos, reuniões, oportunidades)',
+    'Painel de acompanhamento definido (quem olha, com que frequência)',
+    'Primeira revisão de resultados agendada (semana 1)'
+  ]]
+];
+function ChecklistFinal({ pieces, setPieces, savePiece }) {
+  const done = (pieces.checklist_final && typeof pieces.checklist_final === 'object') ? pieces.checklist_final : {};
+  function toggle(id) {
+    const next = { ...done, [id]: !done[id] };
+    setPieces(p => ({ ...p, checklist_final: next }));
+    savePiece('checklist_final', next, true);
+  }
+  const all = CHK_GROUPS.reduce((n, [, items]) => n + items.length, 0);
+  const checked = CHK_GROUPS.reduce((n, [g, items]) => n + items.filter((_, i) => done[g + '_' + i]).length, 0);
+  const pct = Math.round((checked / all) * 100);
+  return <div>
+    <Kicker>Etapa 11 · Lançamento</Kicker><H1>Checklist final</H1>
+    <p style={{ margin: '0 0 16px', color: C.mut, fontSize: 14, maxWidth: 640 }}>A verificação antes de apertar o botão. Cada item marcado fica salvo na campanha — dá para parar e continuar depois.</p>
+    <Card style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>{checked} de {all} itens concluídos</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: pct === 100 ? C.green : C.gold }}>{pct}%</div>
+      </div>
+      <div style={{ height: 8, background: '#EAE7DC', borderRadius: 999, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: pct + '%', background: pct === 100 ? C.green : C.gold2, borderRadius: 999, transition: 'width .3s' }} />
+      </div>
+      {pct === 100 && <div style={{ fontSize: 12.5, color: C.green, fontWeight: 700, marginTop: 10 }}>✓ Tudo verificado — campanha pronta para lançar.</div>}
+    </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {CHK_GROUPS.map(([group, items]) => <Card key={group}>
+        <div style={{ fontSize: 11.5, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, color: C.gold, marginBottom: 10 }}>{group}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {items.map((it, i) => {
+            const id = group + '_' + i, ck = !!done[id];
+            return <label key={id} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', cursor: 'pointer', fontSize: 13.5, color: ck ? C.mut : '#2F3E44', textDecoration: ck ? 'line-through' : 'none', lineHeight: 1.5 }}>
+              <input type="checkbox" checked={ck} onChange={() => toggle(id)} style={{ marginTop: 3, width: 15, height: 15, accentColor: '#2E6B4F', flexShrink: 0 }} />
+              <span>{it}</span>
+            </label>;
+          })}
+        </div>
+      </Card>)}
+    </div>
+  </div>;
+}
+
+// ---------------- Resultados e aprendizados ----------------
+const RES_METRICS = [
+  ['downloads', 'Downloads do report'], ['leads', 'Leads totais'], ['leads_pci', 'Leads de contas-alvo'],
+  ['reunioes', 'Reuniões executivas'], ['oportunidades', 'Oportunidades criadas'], ['propostas', 'Propostas reativadas']
+];
+function Resultados({ cur, pieces, setPieces, savePiece, flash }) {
+  const data = (pieces.resultados && typeof pieces.resultados === 'object' && !Array.isArray(pieces.resultados)) ? pieces.resultados : { semanas: [], aprendizados: '' };
+  const semanas = Array.isArray(data.semanas) ? data.semanas : [];
+  const empty = { semana: '', downloads: '', leads: '', leads_pci: '', reunioes: '', oportunidades: '', propostas: '' };
+  const [form, setForm] = useState(empty);
+  function persist(next, quiet) { setPieces(p => ({ ...p, resultados: next })); savePiece('resultados', next, quiet); }
+  function addWeek() {
+    if (!form.semana.trim()) { flash('Identifique a semana (ex.: Semana 1 ou 07/07 a 11/07).'); return; }
+    persist({ ...data, semanas: [...semanas, { ...form, id: Date.now() }] });
+    setForm(empty);
+  }
+  function delWeek(id) { if (confirm('Remover este registro?')) persist({ ...data, semanas: semanas.filter(s => s.id !== id) }); }
+  const tot = k => semanas.reduce((n, s) => n + (parseInt(s[k], 10) || 0), 0);
+  const num = v => v === '' || v === undefined ? '—' : v;
+  return <div>
+    <Kicker>Etapa 13 · Pós-campanha</Kicker><H1>Resultados e aprendizados</H1>
+    <p style={{ margin: '0 0 18px', color: C.mut, fontSize: 14, maxWidth: 660 }}>Registre os números semana a semana — com foco no que importa no Whale Hunting: lead certo, conta certa, reunião executiva — e documente os aprendizados para a próxima campanha.</p>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
+      {RES_METRICS.map(([k, label]) => <Card key={k} style={{ padding: '16px 18px' }}>
+        <div style={{ fontFamily: "'Source Serif 4',serif", fontSize: 28, fontWeight: 700, color: C.deep }}>{tot(k)}</div>
+        <div style={{ fontSize: 11.5, color: C.mut, marginTop: 2 }}>{label}</div>
+      </Card>)}
+    </div>
+
+    {semanas.length > 0 && <Card style={{ marginBottom: 14, overflowX: 'auto' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Registros semanais</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, minWidth: 640 }}>
+        <thead><tr>
+          <th style={{ textAlign: 'left', padding: '6px 8px', color: C.mut, fontWeight: 700, borderBottom: '1px solid ' + C.line }}>Semana</th>
+          {RES_METRICS.map(([k, l]) => <th key={k} style={{ textAlign: 'right', padding: '6px 8px', color: C.mut, fontWeight: 700, borderBottom: '1px solid ' + C.line }}>{l}</th>)}
+          <th style={{ borderBottom: '1px solid ' + C.line }}></th>
+        </tr></thead>
+        <tbody>{semanas.map(s => <tr key={s.id}>
+          <td style={{ padding: '7px 8px', fontWeight: 600, borderBottom: '1px solid ' + C.line2 }}>{s.semana}</td>
+          {RES_METRICS.map(([k]) => <td key={k} style={{ textAlign: 'right', padding: '7px 8px', borderBottom: '1px solid ' + C.line2 }}>{num(s[k])}</td>)}
+          <td style={{ textAlign: 'right', padding: '7px 8px', borderBottom: '1px solid ' + C.line2 }}><span onClick={() => delWeek(s.id)} style={{ cursor: 'pointer', color: C.red, fontSize: 11, fontWeight: 700 }}>Remover</span></td>
+        </tr>)}</tbody>
+      </table>
+    </Card>}
+
+    <Card style={{ background: '#F4F2EC', marginBottom: 14 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>Registrar semana</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
+        <label><div style={{ fontSize: 11, fontWeight: 700, color: '#4C5B60', marginBottom: 4 }}>Semana</div>
+          <input value={form.semana} onChange={e => setForm({ ...form, semana: e.target.value })} placeholder="Ex.: Semana 1" style={{ width: '100%', border: '1px solid #CFC9B8', borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#FBFAF6', fontFamily: 'inherit' }} /></label>
+        {RES_METRICS.map(([k, label]) => <label key={k}><div style={{ fontSize: 11, fontWeight: 700, color: '#4C5B60', marginBottom: 4 }}>{label}</div>
+          <input type="number" min="0" value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} placeholder="0" style={{ width: '100%', border: '1px solid #CFC9B8', borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#FBFAF6', fontFamily: 'inherit' }} /></label>)}
+      </div>
+      <div style={{ marginTop: 12 }}><Btn onClick={addWeek}>Adicionar registro</Btn></div>
+    </Card>
+
+    <Card>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Aprendizados da campanha</div>
+      <p style={{ fontSize: 12.5, color: C.mut, margin: '0 0 10px' }}>O que funcionou, o que não funcionou, o que repetir e o que mudar na próxima campanha. Isso vira o histórico do Whale Hunting.</p>
+      <textarea value={data.aprendizados || ''} onChange={e => setPieces(p => ({ ...p, resultados: { ...data, aprendizados: e.target.value } }))} rows={6}
+        placeholder="Ex.: O post de dado gerou 3x mais leads de contas-alvo que o de lançamento. O e-mail 3 teve a melhor taxa de resposta…"
+        style={{ width: '100%', border: '1px solid ' + C.line, borderRadius: 10, padding: '12px 14px', fontSize: 13.5, lineHeight: 1.6, background: '#FBFAF6', resize: 'vertical', fontFamily: 'inherit' }} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}><Btn onClick={() => persist(data)}>Salvar aprendizados</Btn></div>
+    </Card>
+  </div>;
+}
+
 // ---------------- Exportar ----------------
 function Exportar({ cur, materials, pieces, flash }) {
   function exportJson() {
@@ -905,9 +1194,9 @@ function Exportar({ cur, materials, pieces, flash }) {
     download((cur.nome || 'campanha').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.json', JSON.stringify(pkg, null, 2), 'application/json');
     flash('Pacote JSON da campanha baixado.');
   }
-  const items = [['Análise estratégica', pieces.analise], ['Landing page', pieces.lp], ['Régua de e-mails', pieces.regua], ['Posts orgânicos', pieces.cont_posts], ['Briefing p/ agência', pieces.cont_briefing], ['Roteiro de carrossel', pieces.cont_carrossel], ['Copies de anúncios', pieces.cont_ads], ['Posts pessoais', pieces.cont_pessoais], ['Checklist de publicação', pieces.cont_checklist]];
+  const items = [['Análise estratégica', pieces.analise], ['Landing page', pieces.lp], ['Régua de e-mails', pieces.regua], ['Plano de LinkedIn Ads', pieces.ads_plan], ['Posts orgânicos', pieces.cont_posts], ['Briefing p/ agência', pieces.cont_briefing], ['Roteiro de carrossel', pieces.cont_carrossel], ['Copies de anúncios', pieces.cont_ads], ['Posts pessoais', pieces.cont_pessoais], ['Checklist de publicação', pieces.cont_checklist]];
   return <div>
-    <Kicker>Etapa 7 · Exportação</Kicker><H1>Exportar campanha</H1>
+    <Kicker>Etapa 12 · Exportação</Kicker><H1>Exportar campanha</H1>
     <p style={{ margin: '0 0 18px', color: C.mut, fontSize: 14, maxWidth: 600 }}>Baixe tudo o que foi gerado. A landing page tem export próprio em HTML na etapa Landing page.</p>
     <Card>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Status das peças</div>
