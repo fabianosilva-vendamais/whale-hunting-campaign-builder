@@ -383,7 +383,8 @@ Material da solução do mês (${c.solucao_principal || 'solução prioritária'
         {screen === 'camp' && <CampForm cur={cur} setCur={setCur} onSave={saveCampaign} saving={loading === 'save'} onMat={() => setScreen('mat')} />}
         {screen === 'mat' && <Materials materials={materials} onAdd={addAttachment} onRemove={removeAttachment} busy={loading} onNext={() => setScreen('est')} />}
         {screen === 'est' && <Strategy pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
-        {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}        {screen === 'regua' && <Regua pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
+        {screen === 'lp' && <LandingPage cur={cur} materials={materials} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
+        {screen === 'regua' && <Regua cur={cur} pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'cont' && <Conteudo pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'ads' && <AdsPlanner pieces={pieces} setPieces={setPieces} loading={loading} ctx={ctx} gen={gen} savePiece={savePiece} flash={flash} />}
         {screen === 'ag' && <AgencyHub pieces={pieces} setPieces={setPieces} savePiece={savePiece} flash={flash} />}
@@ -773,7 +774,7 @@ ${formHtml}
 }
 
 // ---------------- Régua ----------------
-function Regua({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
+function Regua({ cur, pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const [editing, setEditing] = useState({});
   const val = pieces.regua || '';
   const aprov = Array.isArray(pieces.regua_aprov) ? pieces.regua_aprov : [];
