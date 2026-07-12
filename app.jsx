@@ -114,8 +114,7 @@ function Body({ body }) {
   return <Fields body={body} />;
 }
 
-const POWER_TEMAS = 'mudança de mentalidade comercial, gestão ativa de carteira, prospecção, abordagem, levantamento de necessidades, SPIN Selling, recomendação, negociação, fechamento e relacionamento sustentável com cooperados';
-const ACIONAVEL = 'REGRAS DE QUALIDADE (obrigatórias): escreva como uma pessoa sênior da VendaMais, nunca como IA. Nada genérico ou institucional. Proibido "estamos à disposição", "somos referência", promessas de resultado, "garantimos" e tom motivacional. Todo conteúdo se conecta ao Special Report e conduz, de forma consultiva, à necessidade de preparar a equipe comercial (venda consultiva, gestão ativa de carteira, principalidade, abordagem, levantamento de necessidades, recomendação, negociação, fechamento, relacionamento sustentável). Cada peça tem função clara na campanha e um próximo passo concreto. Antes de finalizar, releia e reescreva qualquer trecho vago, óbvio, promocional ou sem função.';
+const ACIONAVEL = 'REGRAS DE QUALIDADE (obrigatórias): escreva como uma pessoa sênior da VendaMais, nunca como IA. Nada genérico ou institucional. Proibido "estamos à disposição", "estamos aqui para", "estamos prontos para", "somos referência", "é com satisfação", promessas de resultado, "garantimos", tom motivacional e perguntas retóricas vazias. Todo conteúdo se conecta ao Special Report e conduz, de forma consultiva, à necessidade de preparar a equipe comercial (venda consultiva, gestão ativa de carteira, principalidade, abordagem, levantamento de necessidades, recomendação, negociação, fechamento, relacionamento sustentável). Cada peça tem função clara na campanha e um próximo passo concreto. Antes de finalizar, releia e reescreva qualquer trecho vago, óbvio, promocional ou sem função.';
 function download(name, text, type) {
   const blob = new Blob([text], { type: type || 'text/plain' });
   const a = document.createElement('a');
@@ -295,7 +294,7 @@ function App() {
   function ctx(opts) {
     const c = cur || {};
     const txt = t => materials.filter(m => m.tipo === t && m.text).map(m => m.text).join('\n\n');
-    const sr = txt('special_report'), rd = txt('radar'), co = txt('contas');
+    const sr = txt('special_report'), rd = txt('radar'), co = txt('contas'), sol = txt('solucao');
     const igFiles = materials.filter(m => m.tipo === 'infografico');
     const igTxt = igFiles.map(m => m.text).filter(Boolean).join('\n\n');
     const ig = igTxt || (igFiles.length ? '(imagem anexada, sem texto — usar apenas como referência visual)' : '(não fornecido)');
@@ -313,7 +312,8 @@ MATERIAIS FORNECIDOS
 Special Report (texto): ${sr ? sr.slice(0, 6000) : '(não fornecido)'}
 Resumo do Radar: ${rd || '(não fornecido)'}
 Infográfico: ${ig}
-Lista de contas-alvo: ${co || '(não fornecida)'}`;
+Lista de contas-alvo: ${co || '(não fornecida)'}
+Material da solução do mês (${c.solucao_principal || 'solução prioritária'}): ${sol ? sol.slice(0, 5000) : '(não fornecido — não invente detalhes de metodologia, formatos ou módulos da solução)'}`;
     if (!(opts && opts.forStrategy) && pieces.analise && String(pieces.analise).trim()) {
       base += `\n\n=== ANÁLISE ESTRATÉGICA APROVADA (use como diretriz central; mantenha coerência total com ela) ===\n${String(pieces.analise).slice(0, 4500)}`;
     }
@@ -475,7 +475,8 @@ function Materials({ materials, onAdd, onRemove, busy, onNext }) {
     { tipo: 'special_report', title: 'Special Report', help: 'O relatório da campanha, em PDF. O texto é lido nos bastidores para alimentar a IA (você não precisa fazer nada).', accept: '.pdf,.txt,.md,text/plain', btn: 'Anexar PDF' },
     { tipo: 'radar', title: 'Informações do Radar', help: 'O documento ou resumo do Radar (PDF ou TXT), quando houver.', accept: '.pdf,.txt,.md,text/plain', btn: 'Anexar arquivo' },
     { tipo: 'infografico', title: 'Infográfico', help: 'A imagem do infográfico (PNG/JPG) ou PDF. Fica guardada para usar na landing page e nos posts.', accept: 'image/*,.pdf', btn: 'Anexar imagem' },
-    { tipo: 'contas', title: 'Lista de contas-alvo', help: 'A lista das contas super PCI (CSV, TXT ou PDF), quando houver.', accept: '.csv,.txt,.pdf,text/plain', btn: 'Anexar arquivo' }
+    { tipo: 'contas', title: 'Lista de contas-alvo', help: 'A lista das contas super PCI (CSV, TXT ou PDF), quando houver.', accept: '.csv,.txt,.pdf,text/plain', btn: 'Anexar arquivo' },
+    { tipo: 'solucao', title: 'Material da solução do mês', help: 'O PDF da solução prioritária desta campanha (ex.: Power Cooperativismo, portfólio do treinamento). A IA usa o conteúdo real dele no e-mail 4 da régua e nos posts — e ele é o anexo indicado para enviar ao lead no Bitrix.', accept: '.pdf,.txt,.md,text/plain', btn: 'Anexar PDF' }
   ];
   return <div>
     <Kicker>Etapa 2 · Materiais</Kicker><H1>Materiais da campanha</H1>
@@ -779,7 +780,7 @@ function Regua({ pieces, setPieces, loading, ctx, gen, savePiece, flash }) {
   const secs = parseSections(val);
   const serialize = list => list.map(s => `=== ${s.label} ===\n${s.body}`).join('\n\n');
   const CAMPOS = 'Objetivo:\nAssunto:\nPré-header:\nCorpo do e-mail:\nCTA principal:\nCTA secundário:\nCondição de pausa:\nTarefa comercial sugerida:\nObservação interna:';
-  const prompt = `${ctx()}\n\n${ACIONAVEL}\n\nEscreva a RÉGUA DE E-MAILS (5 e-mails) para quem baixou o Special Report. A régua conduz o lead a: consumir o material, reconhecer os desafios na própria cooperativa, perceber que exigem método e desenvolvimento comercial, conhecer o Power Cooperativismo e pedir uma conversa executiva. Consultiva, executiva e humana — jamais termine com "estamos à disposição".\nUse EXATAMENTE estes marcadores e, dentro de cada um, EXATAMENTE estes rótulos (um por linha):\n=== E-MAIL 1 — Entrega do Special Report (envio: imediato) ===\n=== E-MAIL 2 — Tensão central (envio: D+2) ===\n=== E-MAIL 3 — Execução comercial (envio: D+5) ===\n=== E-MAIL 4 — Power Cooperativismo (envio: D+8) ===\n=== E-MAIL 5 — Convite para conversa (envio: D+12) ===\nCampos de cada e-mail:\n${CAMPOS}\n\nIntenção — E-MAIL 1: entrega o material, aponta que ele serve para discutir prioridade comercial e termina com uma pergunta concreta (ex.: "dos 10 desafios, qual mais aparece na sua realidade?"); não vende. E-MAIL 2: aprofunda a tensão de principalidade — presença, capilaridade e base grande não garantem principalidade. E-MAIL 3: mostra que muitos desafios são comerciais (gestão ativa de carteira, gerente consultivo, rotina, abordagem, recomendação); começa a conectar com desenvolvimento de equipe, sem vender. E-MAIL 4: apresenta o Power Cooperativismo como caminho prático, citando temas como ${POWER_TEMAS}. E-MAIL 5: convite leve para uma conversa executiva de 30 minutos, sem pressão. Use {nome} e {empresa} como variáveis. Corpo de cada e-mail com no máximo 5 parágrafos curtos.`;
+  const prompt = `${ctx()}\n\n${ACIONAVEL}\n\nEscreva a RÉGUA DE E-MAILS (5 e-mails) para quem baixou o Special Report.\n\nREGRA CENTRAL DA RÉGUA: cada e-mail precisa ENTREGAR algo utilizável por si só — um dado do relatório comentado com uma leitura que o lead não teria sozinho, um critério prático de diagnóstico, um erro comum e como reconhecê-lo. Proibido e-mail que apenas "convida à reflexão" ou faz pergunta retórica sem dar nada antes. O lead deve terminar cada e-mail sabendo algo que não sabia, e só então vem UMA pergunta específica ou próximo passo.\n\nUse EXATAMENTE estes marcadores e, dentro de cada um, EXATAMENTE estes rótulos (um por linha):\n=== E-MAIL 1 — Entrega do Special Report (envio: imediato) ===\n=== E-MAIL 2 — O dado que muda a leitura (envio: D+2) ===\n=== E-MAIL 3 — Autodiagnóstico prático (envio: D+5) ===\n=== E-MAIL 4 — O caminho: ${(cur && cur.solucao_principal) || 'a solução do mês'} (envio: D+8) ===\n=== E-MAIL 5 — Convite para conversa (envio: D+12) ===\nCampos de cada e-mail:\n${CAMPOS}\n\nIntenção — E-MAIL 1: entrega o material, diz em 2 linhas COMO lê-lo com proveito (ex.: "leia primeiro os desafios X e Y, são os que mais diferenciam quem cresce com método") e fecha com uma pergunta concreta sobre qual desafio mais aparece na realidade do lead; não vende.\nE-MAIL 2: escolhe UM dado específico do relatório e entrega uma interpretação não óbvia dele — o que esse número revela sobre a operação comercial e qual armadilha esconde.\nE-MAIL 3: entrega um autodiagnóstico prático — 3 a 4 perguntas objetivas (sim/não) que o decisor pode aplicar hoje sobre a própria operação (carteira, abordagem, rotina comercial), com uma linha sobre o que 2+ respostas negativas indicam. Conecta com desenvolvimento de equipe sem vender.\nE-MAIL 4: apresenta a solução do mês (${(cur && cur.solucao_principal) || 'a solução prioritária'}) usando SOMENTE informações reais do "Material da solução do mês" fornecido no contexto (metodologia, temas, formato); se o material não foi fornecido, descreva a solução apenas pelo nome e pelos temas do contexto, sem inventar módulos. Diga explicitamente que o material da solução segue anexo. Na "Observação interna" deste e-mail, escreva: anexar o PDF do material da solução do mês no Bitrix.\nE-MAIL 5: convite direto e leve para uma conversa executiva de 30 minutos com pauta clara (ex.: "discutir os 2 desafios que você marcou no autodiagnóstico"), sem pressão.\nUse {nome} e {empresa} como variáveis. Corpo de cada e-mail com no máximo 5 parágrafos curtos. Assinatura sempre "[Seu Nome]\\nVendaMais".`;
 
   function regenOne(i) {
     const sec = secs[i];
